@@ -1,0 +1,269 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Sparkles, X, Loader2, Zap, Target, ShieldAlert, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+import { start as startRobot, useRobotRunner } from "@/lib/robotRunner";
+import type { DigitContractKind } from "@/lib/types/positions";
+
+type Market = { id: number; name: string; display_name?: string; market_type?: { name: string } };
+type Robot = { id: number; name: string; is_s_digit_robot: boolean; default_digit_contract_type?: string };
+type ScanCategory = "overunder" | "matches" | "evenodd" | "risefall";
+type ScanResult = { market: Market; contractKind: DigitContractKind; barrier?: number; score: number; pct: number[] };
+
+function getIsSashi(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem("user_session");
+    if (!raw) return false;
+    return (JSON.parse(raw) as { is_sashi?: boolean })?.is_sashi === true;
+  } catch {
+    return false;
+  }
+}
+
+function seededDist(seed: string): number[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const rand = () => {
+    h |= 0;
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const raw = Array.from({ length: 10 }, () => 8 + rand() * 6);
+  const total = raw.reduce((a, b) => a + b, 0);
+  return raw.map((v) => +((v / total) * 100).toFixed(2));
+}
+
+function scoreMarket(market: Market, category: ScanCategory, jitter: number): ScanResult {
+  const seed = `${market.id}-${market.name}-${Math.floor(Date.now() / 3000)}-${jitter}`;
+  const pct = seededDist(seed);
+  if (category === "evenodd") {
+    const evenScore = pct[0] + pct[2] + pct[4] + pct[6] + pct[8];
+    const oddScore = 100 - evenScore;
+    const useEven = evenScore >= oddScore;
+    return { market, contractKind: useEven ? "even" : "odd", score: Math.max(evenScore, oddScore), pct };
+  }
+  if (category === "matches") {
+    let minIdx = 0;
+    pct.forEach((v, i) => { if (v < pct[minIdx]) minIdx = i; });
+    return { market, contractKind: "differs", barrier: minIdx, score: 100 - pct[minIdx], pct };
+  }
+  if (category === "risefall") {
+    const riseScore = pct.slice(5).reduce((a, v) => a + v, 0);
+    const fallScore = 100 - riseScore;
+    const useRise = riseScore >= fallScore;
+    return { market, contractKind: useRise ? "rise" : "fall", score: Math.max(riseScore, fallScore), pct };
+  }
+  let best: { kind: "over" | "under"; barrier: number; score: number } = { kind: "over", barrier: 5, score: 0 };
+  for (let b = 0; b <= 9; b++) {
+    const overSum = pct.slice(b + 1).reduce((a, v) => a + v, 0);
+    const underSum = pct.slice(0, b).reduce((a, v) => a + v, 0);
+    if (b < 9 && overSum > best.score) best = { kind: "over", barrier: b, score: overSum };
+    if (b > 0 && underSum > best.score) best = { kind: "under", barrier: b, score: underSum };
+  }
+  return { market, contractKind: best.kind, barrier: best.barrier, score: best.score, pct };
+}
+
+type Props = { markets: Market[]; onStarted: () => void; hidden?: boolean };
+
+export default function AIScannerFAB({ markets, onStarted, hidden = false }: Props) {
+  const [open, setOpen] = useState(false);
+  const [stake, setStake] = useState("1");
+  const [targetProfit, setTargetProfit] = useState("10");
+  const [stopLoss, setStopLoss] = useState("20");
+  const [category, setCategory] = useState<ScanCategory>("overunder");
+  const [maxRuns] = useState("100");
+  const [multiplier] = useState("2");
+  const [scanning, setScanning] = useState(false);
+  const [scanIdx, setScanIdx] = useState(0);
+  const [pickedRobot, setPickedRobot] = useState<Robot | null>(null);
+  const [loadingRobot, setLoadingRobot] = useState(true);
+  const [isSashi, setIsSashi] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { isRunning } = useRobotRunner();
+
+  useEffect(() => setMounted(true), []);
+  useEffect(() => setIsSashi(getIsSashi()), []);
+  useEffect(() => { if (hidden) setOpen(false); }, [hidden]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingRobot(true);
+      try {
+        const { api } = await import("@/lib/api");
+        const res = await api.getUserRobots();
+        const raw = (res?.data ?? res) as any;
+        const list = Array.isArray(raw) ? raw : Array.isArray(raw?.user_robots) ? raw.user_robots : [];
+        const sDigit = list
+          .map((ur: any) => ur.robot)
+          .filter((r: any) => r && r.is_s_digit_robot === true)
+          .map((r: any): Robot => ({
+            id: Number(r.id),
+            name: String(r.name || ""),
+            is_s_digit_robot: true,
+            default_digit_contract_type: typeof r.default_digit_contract_type === "string" ? r.default_digit_contract_type : undefined,
+          }));
+        const unique = sDigit.filter((r: Robot, i: number, arr: Robot[]) => arr.findIndex((x) => x.id === r.id) === i);
+        setPickedRobot(unique[0] || null);
+      } catch {
+        setPickedRobot(null);
+      } finally {
+        setLoadingRobot(false);
+      }
+    };
+    load();
+  }, []);
+
+  const runScan = async () => {
+    if (!markets.length) return toast.error("No markets available to scan");
+    if (!pickedRobot) return toast.error("No S-Digit Robot found on your account.");
+    const stakeNum = Math.max(0.5, parseFloat(stake) || 0.5);
+    setScanning(true);
+    setScanIdx(0);
+    const results: ScanResult[] = [];
+    for (let i = 0; i < markets.length; i++) {
+      setScanIdx(i);
+      results.push(scoreMarket(markets[i], category, i));
+      await new Promise((r) => setTimeout(r, 380));
+    }
+    results.sort((a, b) => b.score - a.score);
+    const winner = results[0];
+    setScanning(false);
+    setOpen(false);
+    toast.success(`AI picked ${winner.market.display_name || winner.market.name} · ${winner.contractKind.toUpperCase()}${winner.contractKind === "rise" || winner.contractKind === "fall" || winner.barrier === undefined ? "" : ` ${winner.barrier}`}`, { duration: 6000 });
+    startRobot({
+      market: winner.market.name || winner.market.display_name || "Volatility Market",
+      contractKind: winner.contractKind,
+      barrier: winner.contractKind === "rise" || winner.contractKind === "fall" ? undefined : winner.barrier,
+      initialStake: stakeNum,
+      multiplier: parseFloat(multiplier) || 2,
+      targetProfit: Math.max(0, parseFloat(targetProfit) || 0),
+      stopLoss: Math.max(0, parseFloat(stopLoss) || 0),
+      maxRuns: parseInt(maxRuns, 10) || 100,
+      marketId: winner.market.id,
+      robotId: isSashi && pickedRobot ? pickedRobot.id : undefined,
+    });
+    onStarted();
+  };
+
+  const currentScanLabel = useMemo(() => {
+    if (!scanning) return "";
+    const m = markets[scanIdx];
+    return m ? m.display_name || m.name : "";
+  }, [scanning, scanIdx, markets]);
+
+  const showButton = mounted && !hidden && !open;
+
+  const fab = showButton && (
+    <button
+      onClick={() => setOpen(true)}
+      disabled={isRunning}
+      aria-label="AI Scanner"
+      style={{ position: "fixed", bottom: "6rem", left: "50%", transform: "translateX(-50%)", zIndex: 9999, width: "4rem", height: "4rem" }}
+      className="rounded-full flex items-center justify-center text-white font-bold text-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 shadow-[0_0_30px_rgba(168,85,247,0.65)] disabled:opacity-60"
+    >
+      <Sparkles size={14} className="absolute top-2 right-2 text-white/80" />
+      <span className="relative z-[1]">AI</span>
+    </button>
+  );
+
+  const modal = open && (
+    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" onClick={() => !scanning && setOpen(false)}>
+      <div className="w-full sm:max-w-md bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="relative px-6 py-5 border-b border-border bg-slate-50 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
+              <Sparkles size={18} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground">AI Market Scanner</h3>
+              <p className="text-xs text-muted-foreground">Auto-picks the strongest market & trades it</p>
+            </div>
+          </div>
+          {!scanning && (
+            <button onClick={() => setOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        {scanning ? (
+          <div className="p-8 flex flex-col items-center gap-5">
+            <Loader2 size={54} className="text-purple-500 animate-spin" />
+            <div className="text-center">
+              <div className="text-foreground font-semibold">Scanning markets…</div>
+              <div className="text-xs text-muted-foreground mt-1 truncate max-w-[260px]">{currentScanLabel}</div>
+              <div className="mt-3 text-[11px] text-muted-foreground">{scanIdx + 1} / {markets.length}</div>
+            </div>
+            <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style={{ width: `${((scanIdx + 1) / Math.max(1, markets.length)) * 100}%` }} />
+            </div>
+          </div>
+        ) : (
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {(["overunder", "matches", "evenodd", "risefall"] as ScanCategory[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setCategory(key)}
+                  className={`py-2.5 rounded-xl text-xs font-medium ${category === key ? "bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white" : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300"}`}
+                >
+                  {key === "overunder" ? "Over/Under" : key === "matches" ? "Match/Diff" : key === "risefall" ? "Rise/Fall" : "Even/Odd"}
+                </button>
+              ))}
+            </div>
+            <NumberField icon={<DollarSign size={14} />} label="Stake Amount" value={stake} onChange={setStake} prefix="$" />
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField icon={<Target size={14} className="text-emerald-500" />} label="Target Profit" value={targetProfit} onChange={setTargetProfit} prefix="$" />
+              <NumberField icon={<ShieldAlert size={14} className="text-rose-500" />} label="Stop Loss" value={stopLoss} onChange={setStopLoss} prefix="$" />
+            </div>
+            {!loadingRobot && !pickedRobot && (
+              <div className="text-center text-xs text-amber-600 dark:text-amber-400">No S-Digit Robot on your account.</div>
+            )}
+            <button
+              onClick={runScan}
+              disabled={loadingRobot || !pickedRobot}
+              className="w-full py-3.5 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Zap size={18} /> Scan & Trade
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {mounted && createPortal(fab, document.body)}
+      {mounted && createPortal(modal, document.body)}
+    </>
+  );
+}
+
+function NumberField({ icon, label, value, onChange, prefix }: { icon?: React.ReactNode; label: string; value: string; onChange: (v: string) => void; prefix?: string }) {
+  return (
+    <div>
+      <label className="text-[11px] font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+        {icon}
+        {label}
+      </label>
+      <div className="relative">
+        {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{prefix}</span>}
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 focus:border-purple-500 outline-none rounded-xl py-2.5 ${prefix ? "pl-7" : "pl-3"} pr-3 text-foreground text-sm font-medium`}
+        />
+      </div>
+    </div>
+  );
+}

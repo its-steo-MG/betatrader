@@ -1,0 +1,237 @@
+"use client"
+
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import MainPage from "@/components/fx-pro-trading/main-page"
+import RobotsPage from "@/components/fx-pro-trading/robots-page"
+import TradesPage from "@/components/fx-pro-trading/trades-page"
+import HistoryPage from "@/components/fx-pro-trading/history-page"
+import BottomNavigation from "@/components/bottom-navifation"
+import { Sidebar } from "@/components/sidebar"
+import { TopNavbar } from "@/components/top-navbar"
+import { toast } from "sonner"
+import { usePriceUpdates } from "@/hooks/use-price-updates"
+import type { Account } from "@/types/account"   // ← Import shared type
+
+interface User {
+  username: string
+  email: string
+  phone: string
+  is_sashi: boolean
+  is_email_verified: boolean
+  accounts: Account[]           // ← Now uses shared Account
+}
+
+export default function TradingApp() {
+  const [currentPage, setCurrentPage] = useState("main")
+  const [hasProFx, setHasProFx] = useState<boolean | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [activeAccount, setActiveAccount] = useState<Account | null>(null)
+  const [loginType, setLoginType] = useState<string>("real")
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isNavVisible, setIsNavVisible] = useState(true)
+
+  const mainRef = useRef<HTMLElement>(null)
+  const router = useRouter()
+
+  usePriceUpdates()
+
+  const loadSession = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    const raw = localStorage.getItem("user_session")
+
+    if (!raw) {
+      setIsLoggedIn(false)
+      setUser(null)
+      setActiveAccount(null)
+      setError("No session data found. Please log in.")
+      toast.error("No session data found. Please log in.")
+      router.push("/login")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const data = JSON.parse(raw) as User
+
+      if (!data || !data.accounts || !Array.isArray(data.accounts)) {
+        throw new Error("Invalid session data: accounts missing or not an array")
+      }
+
+      // Normalize balances
+      const normalizedUser: User = {
+        ...data,
+        accounts: data.accounts.map((acc) => ({
+          ...acc,
+          balance: Number(acc.balance) || 0,
+        })),
+      }
+
+      setIsLoggedIn(true)
+      setUser(normalizedUser)
+
+      const activeId = localStorage.getItem("active_account_id")
+      const account =
+        normalizedUser.accounts.find((acc) => String(acc.id) === String(activeId)) ||
+        normalizedUser.accounts.find((acc) => acc.account_type === "pro-fx") ||
+        normalizedUser.accounts[0]
+
+      if (!account) {
+        throw new Error("No valid account found in session data")
+      }
+
+      setActiveAccount(account)
+      setLoginType(account.account_type === "demo" ? "demo" : "real")
+
+      // Check for Pro-FX account
+      const proFxAccount = normalizedUser.accounts.find((acc) => acc.account_type === "pro-fx")
+      if (!proFxAccount) {
+        setHasProFx(false)
+        setError("Pro-FX account required")
+        toast.error("Pro-FX account required")
+        router.push("/dashboard")
+        return
+      }
+
+      setHasProFx(true)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load session data"
+      setIsLoggedIn(false)
+      setUser(null)
+      setActiveAccount(null)
+      setError(message)
+      toast.error(message)
+      router.push("/login")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router])
+
+  useEffect(() => {
+    loadSession()
+
+    const handleSessionUpdate = () => loadSession()
+    window.addEventListener("session-updated", handleSessionUpdate)
+    return () => window.removeEventListener("session-updated", handleSessionUpdate)
+  }, [loadSession])
+
+  // Fixed handler – now matches the imported Account type
+  const handleSwitchAccount = (account: Account) => {
+    if (!account || !user) return
+
+    try {
+      localStorage.setItem("active_account_id", String(account.id))
+      localStorage.setItem("account_type", account.account_type)
+      localStorage.setItem("login_type", account.account_type === "demo" ? "demo" : "real")
+
+      const updatedUser: User = {
+        ...user,
+        accounts: user.accounts.map((acc) =>
+          String(acc.id) === String(account.id)
+            ? { ...acc, balance: Number(account.balance) || 0 }
+            : acc
+        ),
+      }
+
+      setUser(updatedUser)
+      setActiveAccount(account)
+      setLoginType(account.account_type === "demo" ? "demo" : "real")
+      localStorage.setItem("user_session", JSON.stringify(updatedUser))
+      window.dispatchEvent(new Event("session-updated"))
+    } catch (error) {
+      console.error("Error switching account:", error)
+      toast.error("Failed to switch account. Please try again.")
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.clear()
+    setIsLoggedIn(false)
+    setUser(null)
+    setActiveAccount(null)
+    setLoginType("real")
+    router.push("/login")
+  }
+
+  const availableAccounts =
+    loginType === "real"
+      ? (user?.accounts || []).filter((acc) => acc.account_type !== "demo")
+      : (user?.accounts || []).filter((acc) => acc.account_type === "demo")
+
+  if (isLoading || hasProFx === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-foreground bg-background">
+        Loading...
+      </div>
+    )
+  }
+
+  if (error || hasProFx === false) {
+    return null
+  }
+
+  return (
+    <div className="relative min-h-screen flex flex-col text-foreground">
+      <div className="fixed inset-0 z-0 hidden dark:block pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
+        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl" />
+      </div>
+      <div className="fixed inset-0 z-0 block dark:hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
+        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
+      </div>
+      <div className="relative z-10 min-h-screen flex flex-col">
+      <TopNavbar
+        isLoggedIn={isLoggedIn}
+        user={user}
+        accountBalance={Number(activeAccount?.balance) || 0}
+        showBalance={true}
+        activeAccount={activeAccount}
+        accounts={availableAccounts}
+        onSwitchAccount={handleSwitchAccount}
+        onLogout={handleLogout}
+      />
+
+      <div className="flex flex-1">
+        <Sidebar
+          loginType={loginType}
+          activeAccount={activeAccount}
+          accounts={availableAccounts}
+          // onSwitchAccount={handleSwitchAccount}   // Uncomment after updating Sidebar
+        />
+
+        <main ref={mainRef} className="flex-1 w-full overflow-auto md:pl-64 pb-24">
+          {(() => {
+            switch (currentPage) {
+              case "main":
+                return <MainPage />
+              case "robots":
+                return <RobotsPage setIsNavVisible={setIsNavVisible} />
+              case "trades":
+                return <TradesPage />
+              case "history":
+                return <HistoryPage />
+              default:
+                return <MainPage />
+            }
+          })()}
+        </main>
+      </div>
+      </div>
+
+      <div
+        className={`fixed bottom-0 left-0 right-0 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border-t border-white/40 dark:border-white/10 shadow-2xl transition-transform duration-300 ease-out z-50 md:pl-64 ${
+          isNavVisible ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <BottomNavigation currentPage={currentPage} onPageChange={setCurrentPage} />
+      </div>
+    </div>
+  )
+}

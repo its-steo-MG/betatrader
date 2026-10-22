@@ -1,0 +1,374 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  TrendingUp,
+  LogOut,
+  Menu,
+  X,
+  WalletIcon,
+  Bot,
+  User,
+  Zap,
+  MessageSquare,
+  Headset,
+  Briefcase,
+  Copy,
+  Hash,
+  FileText,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import type { Account } from "@/types/account";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { GlassControl } from "@/components/GlassControl";
+
+type LoginType = "real" | "demo" | string;
+
+interface SidebarProps {
+  loginType: LoginType;
+  activeAccount?: Account | null;
+  accounts?: Account[];
+  onSwitchAccount?: (account: Account) => void;
+}
+
+const ACTIVE_ACCOUNT_KEY = "active_account_id";
+
+export function Sidebar({
+  loginType,
+  activeAccount: propActiveAccount,
+  accounts = [],
+  onSwitchAccount,
+}: SidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeAccount, setActiveAccount] = useState<Account | null>(
+    propActiveAccount ?? null
+  );
+
+  useEffect(() => {
+    const storedId = Number(localStorage.getItem(ACTIVE_ACCOUNT_KEY));
+
+    if (Array.isArray(accounts) && accounts.length > 0) {
+      let found = accounts.find((a) => a.id === storedId);
+
+      if (!found) {
+        if (loginType === "demo") {
+          found =
+            accounts.find(
+              (a) => a.account_type === "demo" && a.platform === "traderiser"
+            ) || accounts.find((a) => a.account_type === "demo");
+        } else {
+          found =
+            accounts.find((a) => a.account_type === "standard") || accounts[0];
+        }
+      }
+
+      setActiveAccount(found || accounts[0]);
+    } else if (propActiveAccount) {
+      setActiveAccount(propActiveAccount);
+    }
+  }, [accounts, propActiveAccount, loginType]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ account: Account }>;
+      setActiveAccount(ev.detail.account);
+    };
+    window.addEventListener("account-switch", handler);
+    return () => window.removeEventListener("account-switch", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const newBalance = (e as CustomEvent).detail;
+      setActiveAccount((prev) =>
+        prev ? { ...prev, balance: newBalance } : prev
+      );
+    };
+    window.addEventListener("balance-updated", handler);
+    return () => window.removeEventListener("balance-updated", handler);
+  }, []);
+
+  useEffect(() => setIsOpen(false), [pathname]);
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setIsOpen(false);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push("/login");
+  };
+
+  const switchAccount = (account: Account) => {
+    setActiveAccount(account);
+    localStorage.setItem(ACTIVE_ACCOUNT_KEY, String(account.id));
+    onSwitchAccount?.(account);
+    window.dispatchEvent(
+      new CustomEvent("account-switch", { detail: { account } })
+    );
+  };
+
+  const displayedAccounts =
+    loginType === "demo"
+      ? accounts.filter(
+          (acc) =>
+            acc.account_type === "demo" || acc.account_type === "mt5-demo"
+        )
+      : accounts.filter(
+          (acc) =>
+            acc.account_type !== "demo" && acc.account_type !== "mt5-demo"
+        );
+
+  const navItems = (() => {
+    if (!activeAccount) {
+      return [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/trading", label: "Trading", icon: TrendingUp },
+      ];
+    }
+
+    const isDemo =
+      activeAccount.account_type === "demo" ||
+      activeAccount.account_type === "mt5-demo";
+    const isMt5 = activeAccount.platform === "mt5";
+    const isProFx = activeAccount.account_type === "pro-fx";
+
+    let items;
+
+    if (isProFx) {
+      items = [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/fx-pro-trading", label: "Pro-FX Trading", icon: Zap },
+        { href: "/fx-pro-robots", label: "Pro-Robots", icon: Bot },
+        { href: "/wallet", label: "Wallet", icon: WalletIcon },
+        { href: "/profile", label: "Profile", icon: User },
+        { href: "/copy-trading", label: "Copy Trading", icon: Copy },
+        { href: "/customercare", label: "Customer Care", icon: MessageSquare },
+        { href: "/agents", label: "Agent Services", icon: Headset },
+        { href: "/management", label: "Account Management", icon: Briefcase },
+      ];
+    } else if (isMt5) {
+      items = [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/mt5", label: "MT5 Trading", icon: TrendingUp },
+        { href: "/ea-robots", label: "EA Robots", icon: Zap },
+        { href: "/wallet", label: "Wallet", icon: WalletIcon },
+        { href: "/profile", label: "Profile", icon: User },
+        { href: "/customercare", label: "Customer Care", icon: MessageSquare },
+        { href: "/agents", label: "Agent Services", icon: Headset },
+      ];
+    } else {
+      items = [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/trading", label: "Trading", icon: TrendingUp },
+        { href: "/digits-trading", label: "Digits Trading", icon: Hash },
+        { href: "/robots", label: "Robots", icon: Bot },
+        { href: "/wallet", label: "Wallet", icon: WalletIcon },
+        { href: "/profile", label: "Profile", icon: User },
+        { href: "/copy-trading", label: "Copy Trading", icon: Copy },
+        { href: "/customercare", label: "Customer Care", icon: MessageSquare },
+        { href: "/agents", label: "Agent Services", icon: Headset },
+        { href: "/management", label: "Account Management", icon: Briefcase },
+      ];
+    }
+
+    if (isDemo) {
+      items = items.filter((item) => item.href !== "/wallet");
+    }
+
+    return items;
+  })();
+
+  return (
+    <>
+      {/* Mobile toggle */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-60 md:hidden bg-gradient-to-r from-pink-500 to-pink-600 p-2 rounded-lg"
+      >
+        {isOpen ? (
+          <X className="w-6 h-6 text-white" />
+        ) : (
+          <Menu className="w-6 h-6 text-white" />
+        )}
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-screen w-64 sm:w-60 md:w-64 bg-white/75 dark:bg-zinc-950/75 backdrop-blur-2xl border-r border-white/30 dark:border-white/10 z-50 transform transition-transform duration-300 overflow-hidden flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        {/* Video Header */}
+        <div className="relative h-40 sm:h-36 md:h-48 w-full overflow-hidden flex-shrink-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/sidebg.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent" />
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col gap-4 p-3 sm:p-3 md:p-4 flex-1 overflow-y-auto">
+          {activeAccount && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-lg flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <LayoutDashboard className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {activeAccount.platform === "mt5" ? "MT5" : "Traderiser"} -{" "}
+                  {activeAccount.account_type.charAt(0).toUpperCase() +
+                    activeAccount.account_type.slice(1)}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">
+                  ${Number(activeAccount.balance ?? 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Account Switcher */}
+          {Array.isArray(displayedAccounts) && displayedAccounts.length > 1 && (
+            <select
+              value={activeAccount?.id ?? ""}
+              onChange={(e) => {
+                const acc = displayedAccounts.find(
+                  (a) => a.id === Number(e.target.value)
+                );
+                if (acc) switchAccount(acc);
+              }}
+              className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md text-slate-900 dark:text-white border border-white/40 dark:border-white/10 px-3 py-2 rounded-lg w-full text-sm flex-shrink-0"
+            >
+              {displayedAccounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.platform === "mt5" ? "MT5" : "Traderiser"} -{" "}
+                  {acc.account_type.charAt(0).toUpperCase() +
+                    acc.account_type.slice(1)}{" "}
+                  (${Number(acc.balance).toFixed(2)})
+                </option>
+              ))}
+            </select>
+          )}
+
+          <nav className="flex flex-col gap-2 min-h-0">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`
+                    relative flex items-center gap-3 px-4 py-2.5 md:py-3 rounded-2xl
+                    transition-all group flex-shrink-0 overflow-hidden
+                    ${
+                      isActive
+                        ? "drop-on-top bg-gradient-to-r from-pink-500/40 to-pink-600/30 border-2 border-pink-400 text-pink-700 dark:text-pink-200 shadow-lg shadow-pink-500/30"
+                        : "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-pink-500/10"
+                    }
+                  `}
+                >
+                  <span className="relative z-[1] flex items-center gap-3 w-full">
+                    <Icon
+                      size={20}
+                      className={
+                        isActive
+                          ? "text-pink-600 dark:text-pink-300 flex-shrink-0 drop-shadow"
+                          : "text-slate-500 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-white flex-shrink-0"
+                      }
+                    />
+                    <span className="font-medium text-sm sm:text-sm md:text-base truncate">
+                      {item.label}
+                    </span>
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col gap-3 p-3 sm:p-3 md:p-4 border-t border-white/30 dark:border-white/10 flex-shrink-0 bg-white/40 dark:bg-black/30 backdrop-blur-xl">
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Theme</span>
+            <ThemeToggle />
+          </div>
+
+          {/* Glass style — Clear / Frosted / Solid */}
+          <GlassControl />
+
+          <Link
+            href="/terms"
+            onClick={() => setIsOpen(false)}
+            className={`
+              relative flex items-center gap-3 px-4 py-2 sm:py-2.5 rounded-2xl text-sm transition-all overflow-hidden
+              ${
+                pathname === "/terms"
+                  ? "drop-on-top bg-gradient-to-r from-pink-500/40 to-pink-600/30 border-2 border-pink-400 text-pink-700 dark:text-pink-200 shadow-lg shadow-pink-500/30"
+                  : "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white hover:bg-pink-500/10"
+              }
+            `}
+          >
+            <FileText size={18} className="relative z-[1] flex-shrink-0" />
+            <span className="relative z-[1] font-medium truncate">Terms & Conditions</span>
+          </Link>
+
+          <div className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-pink-500">
+                Trade Riser v4.1
+              </p>
+              <span className="drop-on-top relative overflow-hidden rounded-full border border-blue-400/60 bg-blue-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                <span className="relative z-[1]">Beta</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">Advanced Multi-Broker</p>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="
+              drop-on-top relative
+              flex items-center gap-3 px-4 py-2 sm:py-2.5 md:py-3 rounded-lg
+              text-slate-600 dark:text-white/70 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10
+              transition-all w-full group text-sm md:text-base
+            "
+          >
+            <span className="relative z-[1] flex items-center gap-3">
+              <LogOut
+                size={20}
+                className="text-slate-500 dark:text-zinc-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 flex-shrink-0"
+              />
+              <span className="font-medium truncate">Logout</span>
+            </span>
+          </button>
+        </div>
+      </aside>
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  );
+}

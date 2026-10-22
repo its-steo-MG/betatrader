@@ -1,0 +1,1658 @@
+// lib/api.ts (updated with suspension typing + customer care admin helpers)
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://traderiserproapp.onrender.com/api"
+
+
+
+interface ApiResponse<T> {
+  data?: T
+  error?: string
+  status?: number
+}
+interface Number {
+  replace?: number
+}
+
+export { updateBalanceAfterTrade } from "./balance-utils";
+
+
+export interface Currency {
+  code: string
+  name: string
+}
+
+
+export interface Wallet {
+  id: number
+  account_type: string
+  wallet_type: string
+  balance: string | number
+  currency: Currency
+  created_at: string
+}
+
+export interface Account {
+  id?: number;
+  account_type: string;
+  platform?: string;           // "traderiser", "mt5", "deriv", etc.
+  login: string;
+  balance?: number;
+  activeAccount: boolean;
+  leverage?: number;
+  mt5_login?: string;
+  mt5_server?: string;
+}export interface Account {
+  account_type: string
+  login: string
+  balance?: number
+  activeAccount: boolean
+}
+
+export interface WalletTransaction {
+  id: number
+  transaction_type: string
+  amount: string
+  currency: Currency
+  status: string
+  created_at: string
+  converted_amount?: string
+  target_currency?: Currency
+  exchange_rate_used?: number
+  reference_id?: string
+  checkout_request_id?: string
+}
+
+export interface MpesaNumberResponse {
+  phone_number: string
+}
+
+export interface ForexPair {
+  id: number
+  name: string
+  base_currency: string
+  quote_currency: string
+  pip_value: number
+  contract_size: number
+  spread: number
+  base_simulation_price: number
+}
+
+export interface ForexRobot {
+  id: number
+  name: string
+  description: string
+  win_rate_normal: number
+  win_rate_sashi: number
+  price: number
+  is_active: boolean
+  created_at: string
+  image_url?: string
+  image?: string
+  discounted_price?: number
+  effective_price?: number
+  original_price?: number
+  max_open_positions?:number
+  is_ea?:boolean
+}
+
+export interface RobotRaw {
+  price?: number
+}
+
+export interface UserRobot {
+  id: number
+  user: number
+  robot: ForexRobot
+  is_running: boolean
+  stake_amount: number
+  interval_seconds: number
+  is_ea?:boolean
+  max_open_positions?:number
+  created_at: string
+  updated_at: string
+  purchased_at: string
+  last_trade_time?: string
+  user_robots?:UserRobot[]
+}
+
+export interface BotLog {
+  id: number
+  user_robot: number
+  pair: ForexPair
+  entry_price: number
+  exit_price: number
+  result: "win" | "loss"
+  p_l: number
+  trade_time: string
+  timestamp: string
+  message: string
+  profit_loss?: number | string
+  trade_result?: "win" | "loss"
+}
+
+export interface Position {
+  id: number
+  user: number
+  account: number
+  pair: ForexPair
+  direction: "buy" | "sell"
+  volume_lots: number
+  entry_price: number
+  sl?: number
+  tp?: number
+  floating_p_l: number
+  status: "open" | "closed"
+  entry_time: string
+  time_frame: string
+}
+
+export interface ForexTrade {
+  id: number
+  position: Position
+  close_price: number
+  realized_p_l: number
+  close_time: string
+  close_reason: string
+}
+
+export interface WalletBalance {
+  balance: number
+  currency: string
+  account_type: string
+}
+
+export interface Agent {
+  id: number
+  name: string
+  method: string
+  location: string
+  rating: number
+  reviews: number
+  deposit_rate_kes_to_usd: number
+  withdrawal_rate_usd_to_kes: number
+  min_amount?: number
+  max_amount?: number
+  response_time?: string
+  verified: boolean
+  image?: string
+  instructions?: string
+}
+
+export interface AgentDeposit {
+  id: number
+  agent: number
+  amount_kes: number
+  amount_usd: number
+  payment_method?: string
+  status: "pending" | "verified" | "rejected"
+  screenshot_url?: string
+  binance_tx_hash?: string // ← Added for Binance
+  transaction_code?: string
+  paypal_transaction_id?: string
+  bank_reference?: string
+  created_at: string
+  updated_at?: string
+}
+
+export interface AgentWithdrawal {
+  id: number
+  agent: number
+  amount_usd: number
+  amount_kes: number
+  payment_method?: string
+  status: "pending_otp" | "otp_verified" | "completed" | "rejected"
+  otp_code?: string
+  user_binance_address?: string // ← For Binance withdrawals
+  user_paypal_email?: string
+  user_bank_name?: string
+  user_bank_account_name?: string
+  user_bank_account_number?: string
+  user_bank_swift?: string
+  created_at: string
+  updated_at?: string
+  completed_at?: string
+}
+
+interface Transaction {
+  id: number | string
+  created_at: string
+  transaction_type: "deposit" | "withdrawal"
+  amount: number
+  recipient_name?: string
+  recipient_phone?: string
+  mpesa_id?: string
+  description?: string
+  category?: "family_friends" | "business" | "other"
+}
+
+export interface ChatMessage {
+  id: number
+  content: string
+  sent_at: string
+  is_read: boolean
+  is_system: boolean
+  sender: {
+    id?: number
+    username: string
+    email?: string
+    is_staff: boolean
+  }
+  is_me: boolean
+  user_id?: number
+  // NEW
+  agent?: {
+    id: number
+    name: string
+    image?: string | null
+  } | null
+}
+
+export interface ChatThread {
+  id: number
+  is_active?: boolean
+  user?: {
+    id: number
+    username: string
+    email?: string
+  }
+  messages?: ChatMessage[]
+  last_message?: string | null
+  last_message_at?: string | null
+  unread_count?: number
+  is_blocked?: boolean
+  block_info?: {
+    type?: "permanent" | "temporary"
+    title?: string
+    message?: string
+    can_request_review?: boolean
+  } | null
+  // NEW
+  current_agent?: {
+    id: number
+    name: string
+  } | null
+}
+
+export interface UserSession {
+  id?: number
+  username?: string
+  email?: string
+  accounts?: UserAccount[]
+  [key: string]: unknown
+}
+
+export interface UserAccount {
+  id: number
+  account_type: string
+  balance: number
+  [key: string]: unknown
+}
+
+export interface InitiateManagementResponse {
+  management_id: string
+  payment_amount: number
+  message: string
+}
+
+export interface Trader {
+  id: number
+  user: number
+  username?: string
+  bio: string
+  risk_level: "low" | "medium" | "high"
+  min_allocation: number
+  max_allocation: number
+  performance_fee_percent: number
+  is_active: boolean
+  win_rate: number
+  average_return: number
+  subscriber_count: number
+  created_at: string
+  is_verified?: boolean
+}
+
+export interface CopySubscription {
+  id: number
+  user: number
+  account: number
+  trader: Trader
+  allocated_amount: number
+  max_drawdown_percent: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  current_pnl?: number
+  copied_trades?: number
+}
+
+export interface CreateSubscriptionPayload {
+  trader: number
+  account: number
+  allocated_amount: number
+  max_drawdown_percent?: number
+}
+
+export interface BecomeTraderPayload {
+  bio: string
+  risk_level: "low" | "medium" | "high"
+  min_allocation: number
+  max_allocation: number
+  performance_fee_percent: number
+}
+
+// Newly added Signal generation interface
+export interface Signal {
+  id: number
+  market: {
+    id: number
+    name: string
+    profit_multiplier:number
+  }
+  direction: "buy" | "sell"
+  probability: number
+  take_profit: number
+  stop_loss: number
+  generated_at: string
+  message?: string
+  timeframe?: string
+  current_price?: number
+  strength?:number
+}
+
+export interface PlaceBulkTradePayload {
+  robot_id: number;
+  market_id: number;
+  trade_type_id: number;              // Rise/Fall trade-type id
+  direction: "buy" | "sell";
+  amount: number;                     // stake PER trade
+  number_of_trades: number;           // 1..max_bulk_trades (backend caps)
+  use_martingale?: boolean;
+  martingale_level?: number;
+  account_type?: "standard" | "demo";
+  total_stake?:number;
+}
+
+// Suspension interfaces (new)
+export interface SuspensionDetails {
+  reason?: string;
+  until?: string;
+  evidence_status?: string;
+  appeal_available?: boolean;
+  [key: string]: unknown;
+}
+
+export interface SuspensionInfo {
+  code: "suspended_temporary" | "suspended_permanent";
+  details: SuspensionDetails;
+}
+
+/* ------------------------------------------------------------------ */
+/* MPESA NOTIFICATION TYPE */
+/* ------------------------------------------------------------------ */
+export type MpesaNotification = {
+  id: number;
+  mpesa_id: string | null;
+  notification_type: "received" | "sent";
+  message: string;
+  caller_id: string;
+  is_read: boolean;
+  created_at: string;
+  transaction_type: string | null;
+};
+
+export type LoginResponseData = {
+  access: string;
+  refresh: string;
+  user: UserSession;
+  active_account: Record<string, unknown>;
+  suspension?: SuspensionInfo; // ← NEW: Optional suspension field
+};
+
+/* ------------------------------------------------------------------ */
+/* TOKEN KEYS – MUST MATCH login/signup response */
+/* ------------------------------------------------------------------ */
+const ACCESS_KEY = "access_token"
+const REFRESH_KEY = "refresh_token"
+const ADMIN_KEY = "is_admin"
+
+const getAccess = () => localStorage.getItem(ACCESS_KEY)
+const getRefresh = () => localStorage.getItem(REFRESH_KEY)
+const setAccess = (token: string) => localStorage.setItem(ACCESS_KEY, token)
+
+const clearAuth = () => {
+  localStorage.removeItem(ACCESS_KEY)
+  localStorage.removeItem(REFRESH_KEY)
+  localStorage.removeItem("account_type")
+  localStorage.removeItem("login_type")
+  localStorage.removeItem("user_session")
+  localStorage.removeItem("active_account_id")
+  localStorage.removeItem(ADMIN_KEY)
+}
+
+/* ------------------------------------------------------------------ */
+/* REFRESH TOKEN – uses correct endpoint */
+/* ------------------------------------------------------------------ */
+export async function refreshAccessToken(): Promise<string | null> {
+  const refresh = getRefresh()
+  if (!refresh) return null
+  try {
+    const res = await fetch(`${API_BASE_URL}/accounts/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    })
+    if (!res.ok) {
+      console.error("[api] Refresh failed:", await res.json().catch(() => ({})))
+      clearAuth()
+      return null
+    }
+    const { access } = (await res.json()) as { access: string }
+    setAccess(access)
+    return access
+  } catch (e) {
+    console.error("[api] Refresh network error:", e)
+    clearAuth()
+    return null
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* CORE JSON REQUEST */
+/* ------------------------------------------------------------------ */
+export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
+  const token = getAccess()
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  })
+  if (token) headers.set("Authorization", `Bearer ${token}`)
+
+  let resp = await fetch(url, { ...options, headers })
+
+  // Auto-refresh on 401
+  if (resp.status === 401 && token && !endpoint.includes("token/refresh")) {
+    const newToken = await refreshAccessToken()
+    if (!newToken) {
+      return { error: "Session expired. Please log in again.", status: 401 }
+    }
+    headers.set("Authorization", `Bearer ${newToken}`)
+    resp = await fetch(url, { ...options, headers })
+  }
+
+  let json: T | Record<string, unknown>
+  try {
+    json = (await resp.json()) as T | Record<string, unknown>
+  } catch {
+    return { error: "Invalid JSON from server", status: resp.status }
+  }
+
+  if (!resp.ok) {
+    const detail = (json as Record<string, unknown>)?.detail
+    const error = (json as Record<string, unknown>)?.error
+    const msg =
+      (typeof detail === "string" ? detail : undefined) ??
+      (typeof error === "string" ? error : undefined) ??
+      `Request failed (${resp.status})`
+    return { error: msg, status: resp.status }
+  }
+
+  return { data: json as T, status: resp.status }
+}
+
+/* ------------------------------------------------------------------ */
+/* FILE UPLOAD REQUEST (Agent Deposit) */
+/* ------------------------------------------------------------------ */
+export async function apiRequestWithFile<T>(
+  endpoint: string,
+  formData: FormData,
+  options: Omit<RequestInit, "body"> = {},
+): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
+  const token = getAccess()
+  const headers = new Headers(options.headers as Record<string, string>)
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+  // DO NOT set Content-Type → let browser set multipart boundary
+  let resp = await fetch(url, {
+    ...options,
+    method: "POST",
+    headers,
+    body: formData,
+    credentials: "include",
+  })
+
+  // Token refresh logic...
+  if (resp.status === 401 && token && !endpoint.includes("token/refresh")) {
+    const newToken = await refreshAccessToken()
+    if (newToken) {
+      headers.set("Authorization", `Bearer ${newToken}`)
+      resp = await fetch(url, { ...options, method: "POST", headers, body: formData, credentials: "include" })
+    }
+  }
+
+  let json: T | Record<string, unknown>
+  try {
+    json = (await resp.json()) as T | Record<string, unknown>
+  } catch {
+    return { error: "Invalid JSON from server", status: resp.status }
+  }
+
+  if (!resp.ok) {
+    const detail = (json as Record<string, unknown>)?.detail
+    const error = (json as Record<string, unknown>)?.error
+    const msg =
+      (typeof detail === "string" ? detail : undefined) ??
+      (typeof error === "string" ? error : undefined) ??
+      `Request failed (${resp.status})`
+    return { error: msg, status: resp.status }
+  }
+
+  return { data: json as T, status: resp.status }
+}
+
+/* ------------------------------------------------------------------ */
+/* AUTH METHODS */
+/* ------------------------------------------------------------------ */
+export const signup = async (data: {
+  username: string
+  email: string
+  password: string
+  phone?: string
+  account_type: string
+  referral_code?: string;
+}) => {
+  const response = await apiRequest<{
+    access: string
+    refresh: string
+    user: UserSession
+    active_account: Record<string, unknown>
+  }>("/accounts/signup/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+  if (response.data) {
+    localStorage.setItem("access_token", response.data.access)
+    localStorage.setItem("refresh_token", response.data.refresh)
+    localStorage.setItem("account_type", data.account_type)
+    localStorage.setItem("login_type", data.account_type === "demo" ? "demo" : "real")
+    const normalizedUser: UserSession = {
+      ...response.data.user,
+      accounts: ((response.data.user.accounts || []) as UserAccount[]).map((acc: UserAccount) => ({
+        ...acc,
+        balance: Number(acc.balance) || 0,
+      })),
+    }
+    localStorage.setItem("user_session", JSON.stringify(normalizedUser))
+    const defaultAccount =
+      (normalizedUser.accounts as UserAccount[])?.find((acc: UserAccount) => acc.account_type === data.account_type) ||
+      (normalizedUser.accounts as UserAccount[])?.[0]
+    if (defaultAccount) {
+      localStorage.setItem("active_account_id", defaultAccount.id.toString())
+    }
+  }
+  return response
+}
+
+export const login = async (data: { email: string; password: string; account_type: string }) => {
+  const response = await apiRequest<LoginResponseData>("/accounts/login/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+  if (response.data) {
+    localStorage.setItem("access_token", response.data.access)
+    localStorage.setItem("refresh_token", response.data.refresh)
+    localStorage.setItem("account_type", data.account_type)
+    localStorage.setItem("login_type", data.account_type === "demo" ? "demo" : "real")
+    const normalizedUser: UserSession = {
+      ...response.data.user,
+      accounts: ((response.data.user.accounts || []) as UserAccount[]).map((acc: UserAccount) => ({
+        ...acc,
+        balance: Number(acc.balance) || 0,
+      })),
+    }
+    localStorage.setItem("user_session", JSON.stringify(normalizedUser))
+    const defaultAccount =
+      (normalizedUser.accounts as UserAccount[])?.find((acc: UserAccount) => acc.account_type === data.account_type) ||
+      (normalizedUser.accounts as UserAccount[])?.[0]
+    if (defaultAccount) {
+      localStorage.setItem("active_account_id", defaultAccount.id.toString())
+    }
+  }
+  return response
+}
+
+export const adminLogin = async (data: { username: string; password: string }) => {
+  const response = await apiRequest<{
+    access: string
+    refresh: string
+    user: UserSession
+  }>("/accounts/admin/login/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+  if (response.data) {
+    localStorage.setItem("access_token", response.data.access)
+    localStorage.setItem("refresh_token", response.data.refresh)
+    localStorage.setItem(ADMIN_KEY, "true")
+    const normalizedUser: UserSession = {
+      ...response.data.user,
+    }
+    localStorage.setItem("user_session", JSON.stringify(normalizedUser))
+  }
+  return response
+}
+
+export const createAdditionalAccount = (data: { account_type: string }) =>
+  apiRequest("/accounts/account/create/", { method: "POST", body: JSON.stringify(data) })
+
+export const getAccount = () => apiRequest("/accounts/account/")
+
+export const switchAccount = async (data: { account_id: number }) => {
+  const response = await apiRequest<{ user: UserSession; account: UserAccount }>("/accounts/wallet/switch/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+  if (response.data) {
+    const { user, account } = response.data
+    if (user && account) {
+      const normalizedUser: UserSession = {
+        ...user,
+        accounts: ((user.accounts || []) as UserAccount[]).map((acc: UserAccount) => ({
+          ...acc,
+          balance: Number(acc.balance) || 0,
+        })),
+      }
+      localStorage.setItem("user_session", JSON.stringify(normalizedUser))
+      localStorage.setItem("account_type", (account.account_type as string) || "")
+      localStorage.setItem("login_type", (account.account_type as string) === "demo" ? "demo" : "real")
+      localStorage.setItem("active_account_id", data.account_id.toString())
+      return { data: { user, account }, status: 200 }
+    }
+  }
+  return response
+}
+
+/* ------------------------------------------------------------------ */
+/* TRADING & WALLET */
+/* ------------------------------------------------------------------ */
+export const getMarkets = () => apiRequest("/trading/markets/")
+export const getTradeTypes = () => apiRequest("/trading/trade-types/")
+export const getAssets = () => apiRequest("/trading/assets/")
+export const placeTrade = (data: Record<string, unknown>) =>
+  apiRequest("/trading/trades/place/", { method: "POST", body: JSON.stringify(data) })
+export const getTradeHistory = () => apiRequest("/trading/trades/history/")
+export const cancelTrade = (tradeId: number) => apiRequest(`/trading/trades/${tradeId}/cancel/`, { method: "POST" })
+export const getPriceHistory = (data: { symbol: string; timeframe: string }) =>
+  apiRequest("/trading/price-history/", { method: "POST", body: JSON.stringify(data) })
+export const getRobots = () => apiRequest("/trading/robots/")
+export const getUserRobots = () => apiRequest("/trading/user-robots/")
+export const purchaseRobot = (
+  robotId: number,
+  account_type: "standard" | "demo" = "standard",
+) =>
+  apiRequest<{
+    message: string
+  }>(`/trading/robots/${robotId}/purchase/`, {
+    method: "POST",
+    body: JSON.stringify({ account_type }),
+  })
+export const resetDemoBalance = () => apiRequest("/accounts/demo/reset/", { method: "POST" })
+export const getBots = () => apiRequest("/bots/")
+export const createBot = (data: Record<string, unknown>) =>
+  apiRequest("/bots/", { method: "POST", body: JSON.stringify(data) })
+export const toggleBot = (botId: number) => apiRequest(`/bots/${botId}/toggle/`, { method: "POST" })
+export const getSubscription = () => apiRequest("/bots/subscription/")
+export const subscribe = () => apiRequest("/bots/subscription/", { method: "POST" })
+
+export const getDashboard = async () => {
+  const response = await apiRequest<{ user?: UserSession }>("/dashboard/")
+  if (response.data?.user) {
+    const user = response.data.user
+    const normalizedUser: UserSession = {
+      ...user,
+      accounts: ((user.accounts || []) as UserAccount[]).map((acc: UserAccount) => ({
+        ...acc,
+        balance: Number(acc.balance) || 0,
+      })),
+    }
+    localStorage.setItem("user_session", JSON.stringify(normalizedUser))
+    const defaultAccount =
+      (normalizedUser.accounts as UserAccount[])?.find(
+        (acc: UserAccount) => acc.account_type === localStorage.getItem("account_type"),
+      ) || (normalizedUser.accounts as UserAccount[])?.[0]
+    if (defaultAccount) {
+      localStorage.setItem("active_account_id", defaultAccount.id.toString())
+    }
+  }
+  return response
+}
+
+export const getWallets = async () => {
+  const response = await apiRequest<{ wallets: Wallet[] }>("/wallet/wallets/")
+  if (response.data?.wallets) {
+    response.data.wallets = response.data.wallets.map((wallet: Wallet) => ({
+      ...wallet,
+      balance: Number(wallet.balance) || 0,
+    }))
+  }
+  return response
+}
+
+export const getWalletTransactions = () =>
+  apiRequest<
+    WalletTransaction[] |
+    {
+      results?: WalletTransaction[];
+      transactions?: WalletTransaction[];
+      count?: number;
+      next?: string | null;
+      previous?: string | null;
+    }
+  >("/wallet/transactions/");
+
+export const deposit = (data: {
+  amount: number
+  currency: string
+  wallet_type: string
+  mpesa_phone: string
+  account_type: string
+}) => apiRequest("/wallet/deposit/", { method: "POST", body: JSON.stringify(data) })
+
+export const withdrawOTP = (data: { amount: number; wallet_type: string; account_type: string }) =>
+  apiRequest("/wallet/withdraw/otp/", { method: "POST", body: JSON.stringify(data) })
+
+export const verifyWithdrawal = (data: { code: string; transaction_id: number }) =>
+  apiRequest("/wallet/withdraw/verify/", { method: "POST", body: JSON.stringify(data) })
+
+export const getMpesaNumber = () => apiRequest<MpesaNumberResponse>("/wallet/mpesa-number/")
+export const setMpesaNumber = (data: { phone_number: string }) =>
+  apiRequest("/wallet/mpesa-number/", { method: "POST", body: JSON.stringify(data) })
+
+export const resendOTP = (transactionId: string) =>
+  apiRequest("/wallet/resend-otp/", { method: "POST", body: JSON.stringify({ transaction_id: transactionId }) })
+
+// Newly added endpoints for transfers
+export const initiateTransfer = (data: {
+  amount: number
+  sender_account_type: string
+  recipient_email: string
+  recipient_account_type: string
+}) =>
+  apiRequest<{ transaction_id: string }>("/wallet/transfer/initiate/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const verifyTransfer = (data: { otp: string; transaction_id: number }) =>
+  apiRequest<{ message: string }>("/wallet/transfer/verify/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+// Signal generation endpoint
+export const generateSignal = () => apiRequest<Signal>("/trading/signals/generate/", { method: "POST" })
+
+/* ------------------------------------------------------------------ */
+/* FOREX TRADING */
+/* ------------------------------------------------------------------ */
+export const getForexPairs = () => apiRequest<{ pairs: ForexPair[] }>("/forex/pairs/")
+export const getForexCurrentPrices = (pairIds: number[]) =>
+  apiRequest(`/forex/current-prices/?ids=${pairIds.join(",")}`)
+export const getForexCurrentPrice = (pairId: number) =>
+  apiRequest<{ current_price: number }>(`/forex/current-price/${pairId}/`)
+export const placeForexOrder = (data: {
+  pair_id: number
+  direction: "buy" | "sell"
+  volume_lots: number
+  sl?: number
+  tp?: number
+}) => apiRequest<{ position: Position }>("/forex/orders/place/", { method: "POST", body: JSON.stringify(data) })
+export const getForexPositions = () => apiRequest<{ positions: Position[] }>("/forex/positions/")
+export const closeForexPosition = (positionId: number) =>
+  apiRequest<{ message: string }>(`/forex/positions/${positionId}/close/`, { method: "POST" })
+export const closeAllPositions = () =>
+  apiRequest<{ message: string }>("/forex/positions/close-all/", { method: "POST" })
+export const getForexHistory = () => apiRequest<{ trades: ForexTrade[] }>("/forex/history/")
+
+/* --------------------- FOREX ROBOTS --------------------- */
+export const getForexRobots = () =>
+  apiRequest<{ robots: ForexRobot[] }>("/forex/robots/")
+export const getMyForexRobots = () =>
+  apiRequest<{ user_robots: UserRobot[] }>("/forex/my-robots/")
+export const purchaseForexRobot = (
+  robotId: number,
+  options?: { account_type?: "mt5" | "mt5-demo" | string }
+) =>
+  apiRequest<{
+    message: string;
+    user_robot: UserRobot;
+    charged_from?: string;
+    remaining_balance?: string;
+  }>(`/forex/robots/${robotId}/purchase/`, {
+    method: "POST",
+    body: JSON.stringify(options ?? {}),
+  });
+
+export const toggleForexRobot = (
+  userRobotId: number,
+  config?: { stake?: number; pair_id?: number; timeframe?: string }
+) =>
+  apiRequest<{
+    is_running: boolean;
+    message?: string;
+    is_ea?: boolean;
+    closed_positions?: number;
+  }>(
+    `/forex/robots/${userRobotId}/toggle/`,
+    {
+      method: "POST",
+      body: config ? JSON.stringify(config) : undefined,
+    }
+  )
+
+export const closeEAPositions = (userRobotId: number) =>
+  apiRequest<{
+    success: boolean;
+    message: string;
+    closed_count: number;
+  }>(
+    `/forex/positions/close-ea/${userRobotId}/`,
+    { method: "POST" }
+  )
+
+/* --------------------- BOT LOGS --------------------- */
+export const getForexBotLogs = () =>
+  apiRequest<{ bot_logs: BotLog[] }>("/forex/robot-logs/")
+export const getForexBotLogsByRobot = (userRobotId: number) =>
+  apiRequest<{ bot_logs: BotLog[] }>(`/forex/robot-logs/?user_robot_id=${userRobotId}`)
+
+/* ------------------------------------------------------------------ */
+/* AGENTS */
+/* ------------------------------------------------------------------ */
+export const getAgents = () => apiRequest<{ agents: Agent[] }>("/agents/list/")
+export const getAgentById = (agentId: number) => apiRequest<{ agent: Agent }>(`/agents/${agentId}/`)
+export const createAgentDeposit = async (data: {
+  agent_id: number
+  account: number
+  amount_kes?: number
+  amount_usd_input?: number
+  transaction_code?: string
+  bank_reference?: string          // ← add this
+  binance_tx_hash?: string
+  screenshot?: File
+  method: string
+}) => {
+  const fd = new FormData()
+  fd.append("agent", data.agent_id.toString())
+  fd.append("account", data.account.toString())
+  fd.append("method", data.method)
+
+  const methodLower = data.method.toLowerCase()
+
+  if (methodLower === "binance") {
+    if (data.amount_usd_input !== undefined) {
+      fd.append("amount_usd_input", data.amount_usd_input.toString())
+    }
+    if (data.binance_tx_hash) {
+      fd.append("binance_tx_hash", data.binance_tx_hash)
+    }
+    if (data.screenshot) {
+      fd.append("screenshot", data.screenshot)
+    }
+  } else {
+    if (data.amount_kes !== undefined) {
+      fd.append("amount_kes", data.amount_kes.toString())
+    }
+
+    if (methodLower === "bank_transfer" || methodLower === "bank") {
+      // Bank transfer needs bank_reference
+      if (data.bank_reference) {
+        fd.append("bank_reference", data.bank_reference)
+      }
+      if (data.screenshot) fd.append("screenshot", data.screenshot)
+    } else if (methodLower === "mpesa") {
+      if (data.transaction_code) fd.append("transaction_code", data.transaction_code)
+      if (data.screenshot) fd.append("screenshot", data.screenshot)
+    } else if (methodLower === "paypal") {
+      if (data.transaction_code) fd.append("paypal_transaction_id", data.transaction_code)
+    }
+  }
+
+  return apiRequestWithFile<AgentDeposit>("/agents/deposit/", fd)
+}
+export const verifyAgentDeposit = (data: { deposit_id: number; action: string }) =>
+  apiRequest("/agents/deposit/verify/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+export const requestAgentWithdrawal = (data: {
+  agent: number
+  account: number
+  amount_usd: number
+  user_binance_address?: string
+  user_paypal_email?: string
+  user_bank_name?: string
+  user_bank_account_name?: string
+  user_bank_account_number?: string
+  user_bank_swift?: string
+  phone_number?: string
+}) =>
+  apiRequest<{ id: number }>("/agents/withdraw/request/", {
+    method: "POST",
+    body: JSON.stringify({
+      agent: data.agent,
+      account: data.account,
+      amount_usd: data.amount_usd,
+      ...(data.user_binance_address && { user_binance_address: data.user_binance_address }),
+      ...(data.user_paypal_email && { user_paypal_email: data.user_paypal_email }),
+      ...(data.user_bank_name && { user_bank_name: data.user_bank_name }),
+      ...(data.user_bank_account_name && { user_bank_account_name: data.user_bank_account_name }),
+      ...(data.user_bank_account_number && { user_bank_account_number: data.user_bank_account_number }),
+      ...(data.user_bank_swift && { user_bank_swift: data.user_bank_swift }),
+      ...(data.phone_number && { phone_number: data.phone_number }),
+    }),
+  })
+export const verifyAgentWithdrawal = (data: {
+  withdrawal_id: number
+  otp: string
+}) =>
+  apiRequest<{ message: string }>("/agents/withdraw/verify/", {
+    method: "POST",
+    body: JSON.stringify({
+      withdrawal_id: data.withdrawal_id,
+      otp: data.otp,
+    }),
+  })
+export const resendAgentOTP = (transactionId: number) =>
+  apiRequest<{ message: string }>("/withdrawals/resend-otp/", {
+    method: "POST",
+    body: JSON.stringify({ transaction_id: transactionId }),
+  })
+export const getAgentDeposits = () => apiRequest<{ deposits: AgentDeposit[] }>("/deposits/my-deposits/")
+export const getAgentWithdrawals = () => apiRequest<{ withdrawals: AgentWithdrawal[] }>("/withdrawals/my-withdrawals/")
+
+export const getTransactionHistory = (params?: { account_id?: string | number; limit?: number }) => {
+  const query = new URLSearchParams()
+  if (params?.account_id && params.account_id !== "all") {
+    query.append("account_id", String(params.account_id))
+  }
+  if (params?.limit) {
+    query.append("limit", String(params.limit))
+  }
+  const qs = query.toString()
+  return apiRequest<{
+    count: number
+    results: {
+      id: number
+      account_id: number
+      account_type?: string
+      amount: string
+      type: string
+      description: string
+      created_at: string
+      created_at_formatted: string
+    }[]
+  }>(`/agents/transactions/${qs ? `?${qs}` : ""}`)
+}
+
+/* ------------------------------------------------------------------ */
+/* CUSTOMER CARE (USER + ADMIN)  – only this section was updated */
+/* ------------------------------------------------------------------ */
+export const getChatThread = () => apiRequest<ChatThread>("/customercare/chat/")
+
+export const sendChatMessage = (content: string) =>
+  apiRequest<ChatMessage>("/customercare/chat/", {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  })
+
+export const markMessagesAsRead = () =>
+  apiRequest("/customercare/chat/mark-read/", { method: "POST" })
+
+export const requestReview = () =>
+  apiRequest("/customercare/chat/review/", { method: "POST" })
+
+// Admin threads list (returns array or {threads: []})
+export const getActiveThreads = () =>
+  apiRequest<ChatThread[] | { threads: ChatThread[] }>("/customercare/admin/threads/")
+
+export const getAdminChat = (userId: number) =>
+  apiRequest<ChatThread>(`/customercare/admin/chat/${userId}/`)
+
+// Admin reply – always force is_system=true so it shows as "TradeRiser Support"
+// Admin reply – supports optional agent_id so the message appears as coming from a specific agent
+export const sendAdminMessage = (
+  userId: number,
+  content: string,
+  is_system = true,
+  agentId?: number | null
+) =>
+  apiRequest<ChatMessage>(`/customercare/admin/chat/${userId}/`, {
+    method: "POST",
+    body: JSON.stringify({
+      content,
+      is_system,
+      ...(agentId ? { agent_id: agentId } : {}),
+    }),
+  })
+
+// When admin opens a chat → mark user messages as read (user sees double ticks)
+export const adminMarkMessagesRead = (userId: number) =>
+  apiRequest(`/customercare/admin/chat/${userId}/mark-read/`, {
+    method: "POST",
+  })
+
+export const adminBlockUser = (
+  userId: number,
+  action: "temp" | "perm" | "unblock",
+  reason?: string,
+) =>
+  apiRequest(`/customercare/admin/block/${userId}/`, {
+    method: "POST",
+    body: JSON.stringify({ action, reason }),
+  })
+
+export const getUser = () => apiRequest<{ id: number; is_staff: boolean }>("/accounts/account/")
+
+export const verifyEmailOtp = (data: { email: string; otp: string }) =>
+  apiRequest<{ message: string }>("/accounts/verify-email/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const resendEmailOtp = (email: string) =>
+  apiRequest<{ message: string }>("/accounts/resend-otp/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+
+// --- PASSWORD RESET ---
+export const requestPasswordReset = (email: string) =>
+  apiRequest<{ message: string }>("/accounts/password-reset/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+
+export const verifyPasswordResetOtp = (data: { email: string; otp: string }) =>
+  apiRequest<{ message: string }>("/accounts/password-reset/verify/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const confirmPasswordReset = (data: {
+  email: string
+  otp: string
+  new_password: string
+  confirm_password: string
+}) =>
+  apiRequest<{ message: string }>("/accounts/password-reset/confirm/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const initiateManagement = (data: {
+  stake: number
+  target_profit: number
+  mpesa_phone: string
+  account_type: "standard" | "pro-fx"
+}) =>
+  apiRequest<InitiateManagementResponse>("/management/initiate/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const submitCredentials = (data: {
+  management_id: string
+  account_email: string
+  account_password: string
+}) =>
+  apiRequest("/management/credentials/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const getManagementStatus = () => apiRequest<ManagementRequest[]>("/management/status/")
+
+export interface ManagementRequest {
+  id: number
+  management_id: string
+  user: string
+  stake: number
+  target_profit: number
+  payment_amount: number
+  status: string
+  status_display: string
+  current_pnl: number
+  days: number | null
+  daily_target_profit: number | null
+  start_date: string | null
+  end_date: string | null
+  created_at: string
+  account_type: "standard" | "pro-fx"
+}
+
+/**
+ * Fetch all active traders from the leaderboard
+ */
+export async function fetchTraders() {
+  return apiRequest<Trader[]>("/copy-trading/traders/", {
+    method: "GET",
+  })
+}
+
+/**
+ * Apply to become a trader (signal provider)
+ */
+export async function applyToBecomeTrader(payload: BecomeTraderPayload) {
+  return apiRequest<Trader>("/copy-trading/become-trader/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Create or update a copy subscription
+ */
+export async function createCopySubscription(payload: CreateSubscriptionPayload) {
+  return apiRequest<CopySubscription>("/copy-trading/subscriptions/create/", {
+    method: "POST",
+    body: JSON.stringify({
+      trader: payload.trader,
+      account: payload.account || 1,
+      allocated_amount: payload.allocated_amount,
+      max_drawdown_percent: payload.max_drawdown_percent || 20,
+    }),
+  })
+}
+
+/**
+ * Fetch all subscriptions for the current user
+ */
+export async function fetchUserSubscriptions() {
+  return apiRequest<CopySubscription[]>("/copy-trading/subscriptions/", {
+    method: "GET",
+  })
+}
+
+/**
+ * Pause a subscription
+ */
+export async function pauseSubscription(subscriptionId: number) {
+  return apiRequest<{ message: string }>(`/copy-trading/subscriptions/${subscriptionId}/pause/`, {
+    method: "DELETE",
+  })
+}
+
+/**
+ * Resume a paused subscription
+ */
+export async function resumeSubscription(subscriptionId: number, allocatedAmount: number) {
+  return apiRequest<CopySubscription>("/copy-trading/subscriptions/create/", {
+    method: "POST",
+    body: JSON.stringify({
+      subscription_id: subscriptionId,
+      allocated_amount: allocatedAmount,
+    }),
+  })
+}
+
+// ====================== AUDIO CALL API FUNCTIONS ======================
+export interface InitiateCallResponse {
+  call_id: number
+  status?: string
+  message?: string
+}
+
+export interface AnswerCallResponse {
+  success: boolean
+  message?: string
+  call_id?: number
+  voice_preset?: string
+}
+
+export interface EndCallResponse {
+  success: boolean
+  message?: string
+  call_id?: number
+}
+
+export interface MissedCallsResponse {
+  missed_calls: number
+  has_unread: boolean
+}
+
+// Call Initiation
+export const initiateAudioCall = () =>
+  apiRequest<InitiateCallResponse>("/customercare/call/initiate/", {
+    method: "POST",
+  })
+
+// Answer Call
+export const answerAudioCall = (callId: number, voicePreset: string = "default") =>
+  apiRequest<AnswerCallResponse>(`/customercare/call/answer/${callId}/`, {
+    method: "POST",
+    body: JSON.stringify({ voice_preset: voicePreset }),
+  })
+
+// End Call
+export const endAudioCall = (callId: number) =>
+  apiRequest<EndCallResponse>(`/customercare/call/end/${callId}/`, {
+    method: "POST",
+  })
+
+// Get Missed Calls
+export const getMissedCalls = () =>
+  apiRequest<MissedCallsResponse>("/customercare/call/missed/")
+
+/* ------------------------------------------------------------------ */
+/* Account Suspension */
+/* ------------------------------------------------------------------ */
+export async function appealSuspension(formData: FormData) {
+  return apiRequestWithFile<{
+    message: string;
+    evidence?: {
+      id: string | number;
+      url: string;
+      filename?: string;
+      uploaded_at?: string;
+    } | null;
+  }>(
+    "/accounts/appeal-suspension/",
+    formData,
+    {}
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* MPESA NOTIFICATIONS */
+/* ------------------------------------------------------------------ */
+const MPESA_NOTIF_BASE = process.env.NEXT_PUBLIC_API_URL || "https://traderiserproapp.onrender.com"
+//const MPESA_NOTIF_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
+async function mpesaNotifRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getAccess()
+  const url = `${MPESA_NOTIF_BASE}/mpesa-notif${path}`
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers as Record<string, string>),
+    },
+    cache: "no-store",
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => "")
+    throw new Error(`${res.status}: ${text || res.statusText}`)
+  }
+  return res.json() as Promise<T>
+}
+
+export const listMpesaNotifications = () =>
+  mpesaNotifRequest<MpesaNotification[]>("/notifications/")
+
+export const markMpesaRead = (id: number) =>
+  mpesaNotifRequest<{ status: string }>(`/notifications/${id}/read/`, { method: "POST" })
+
+/* ------------------------------------------------------------------ */
+export const placeDigitTrade = (data: {
+  market_id: number;
+  digit_contract_type: "matches" | "differs" | "even" | "odd" | "over" | "under" | "rise" | "fall";
+  digit_barrier?: number;
+  amount: number;
+  account_type?: 'standard' | 'demo';
+  robot_id?: number;
+  use_martingale?: boolean;
+  martingale_level?: number;
+}) =>
+  apiRequest("/trading/trades/place-digit/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+// ====================== S-DIGIT ROBOT TRADING ======================
+export const placeSRobotTrade = (data: {
+  robot_id: number;
+  market_id: number;
+  digit_contract_type: "matches" | "differs" | "even" | "odd" | "over" | "under" | "rise" | "fall";
+  digit_barrier?: number;
+  amount: number;
+  use_martingale?: boolean;
+  martingale_level?: number;
+  account_type?: 'standard' | 'demo';
+}) =>
+  apiRequest("/trading/trades/place-srobot/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+// ====================== KYC ======================
+export const submitKYC = (formData: FormData) =>
+  apiRequestWithFile<{
+    message: string;
+    status: string
+  }>("/accounts/kyc/submit/", formData);
+
+// ====================== MT5 ENDPOINTS ======================
+export const createMT5Account = (data: { account_type: "mt5" | "demo" }) =>
+  apiRequest("/mt5/create-account/", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+export const getMT5Accounts = () => apiRequest("/mt5/my-accounts/");
+export const switchMT5Account = (data: { account_id: number }) =>
+  apiRequest("/mt5/switch/", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+export const getMT5Positions = () => apiRequest("/mt5/positions/");
+export const openMT5Position = (data: {
+  symbol: string;
+  side: "buy" | "sell";
+  volume: number;
+  open_price?: number;
+  account_type?: "mt5" | "mt5-demo";
+}) => apiRequest("/mt5/positions/open/", {
+  method: "POST",
+  body: JSON.stringify(data)
+});
+export const closeMT5Position = (data: {
+  position_id: string | number;
+  close_price?: number;
+}) => apiRequest("/mt5/positions/close/", {
+  method: "POST",
+  body: JSON.stringify(data)
+});
+
+// ====================== BULK TRADES AI ======================
+export const placeBulkTrade = (data: {
+  robot_id: number;
+  market_id: number;
+  digit_contract_type: "matches" | "differs" | "even" | "odd" | "over" | "under" | "rise" | "fall";
+  digit_barrier?: number;
+  amount: number;
+  number_of_trades: number;
+  use_martingale?: boolean;
+  martingale_level?: number;
+  account_type?: 'standard' | 'demo';
+}) =>
+  apiRequest("/trading/trades/place-bulk/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+// ====================== ELITE ROBOT ======================
+export interface EliteRobotConfig {
+  id: number
+  robot: number
+  robot_name?: string
+  timeframe: string
+  stake: string | number
+  target_profit: string | number
+  target_market: string
+  config_code?: string
+  code_used?: boolean
+  is_running?: boolean
+  is_paused?: boolean
+  is_pro?: boolean              // ← NEW
+  pro_upgraded_at?: string | null
+  current_profit?: string | number
+  status_message?: string
+  last_entry?: string
+  run_started_at?: string | null
+  expected_duration_hours?: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface EliteRunStatus {
+  is_running: boolean
+  is_paused?: boolean
+  is_pro?: boolean              // ← NEW
+  current_profit: string | number
+  target_profit: string | number
+  status_message: string
+  last_entry: string
+  progress_percent: number
+  time_remaining_seconds: number
+  target_reached: boolean
+  stake?: string | number
+  market?: string
+  timeframe?: string
+}
+
+export const getEliteConfig = () =>
+  apiRequest<{ config: EliteRobotConfig | null }>("/trading/elite/config/")
+
+export const saveEliteConfig = (data: {
+  timeframe: string
+  stake: number
+  target_profit: number
+  target_market: string
+}) =>
+  apiRequest<{
+    message: string
+    config: EliteRobotConfig
+    config_code: string
+    email_sent: boolean
+  }>("/trading/elite/config/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+
+export const validateEliteCode = (config_code: string) =>
+  apiRequest<{
+    valid: boolean
+    config: EliteRobotConfig
+  }>("/trading/elite/validate-code/", {
+    method: "POST",
+    body: JSON.stringify({ config_code }),
+  })
+
+export const startEliteRun = (account_type: string = "standard") =>
+  apiRequest<{
+    message: string
+    config: EliteRobotConfig
+    expected_duration_seconds: number
+  }>("/trading/elite/start/", {
+    method: "POST",
+    body: JSON.stringify({ account_type }),
+  })
+
+export const getEliteStatus = (account_type: string = "standard") =>
+  apiRequest<EliteRunStatus>(`/trading/elite/status/?account_type=${account_type}`)
+
+export const resetEliteRun = () =>
+  apiRequest<{ message: string; config: EliteRobotConfig }>("/trading/elite/reset/", {
+    method: "POST",
+    body: JSON.stringify({}),
+  })
+
+export const stopEliteRun = () =>
+  apiRequest<{ message: string; current_profit: string | number }>("/trading/elite/stop/", {
+    method: "POST",
+    body: JSON.stringify({}),
+  })
+
+export const upgradeElite = (account_type: string = "standard") =>
+  apiRequest<{
+    message: string
+    is_used: boolean
+    is_setting: boolean
+    amount_charged: string
+    remaining_balance: string
+  }>("/trading/elite/upgrade/", {
+    method: "POST",
+    body: JSON.stringify({ account_type }),
+  })
+
+  // ====================== ELITE PRO via M-PESA ======================
+export interface EliteProSTKResponse {
+  message: string
+  payment_id: number
+  checkout_request_id: string
+  amount_usd: string
+  amount_kes: number
+  exchange_rate: string
+  phone_number: string
+}
+
+export interface EliteProPaymentStatus {
+  payment_id: number
+  status: "pending" | "processing" | "success" | "failed" | "cancelled"
+  amount_kes: number
+  amount_usd: string
+  mpesa_receipt: string
+  result_desc: string
+  is_pro: boolean
+}
+
+/** Initiate M-Pesa STK Push for Elite Pro ($1500 → KES). Only while paused. */
+export const initiateEliteProMpesa = (phone_number: string) =>
+  apiRequest<EliteProSTKResponse>("/trading/elite/upgrade-pro/", {
+    method: "POST",
+    body: JSON.stringify({ phone_number }),
+  })
+
+/** Poll M-Pesa payment status after STK Push */
+export const getEliteProPaymentStatus = (paymentId: number) =>
+  apiRequest<EliteProPaymentStatus>(`/trading/elite/pro-payment/${paymentId}/`)
+
+/** User: after download animation — sets is_pro=True (does NOT resume) */
+export const activateElitePro = (paymentId: number) =>
+  apiRequest<{
+    message: string
+    is_pro: boolean
+    is_paused: boolean
+    is_running: boolean
+  }>(`/trading/elite/pro-payment/${paymentId}/activate/`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  })
+
+/** Admin: mark Elite Pro payment as paid (user can then download) */
+export const adminMarkEliteProPaid = (paymentId: number, note?: string) =>
+  apiRequest<{
+    message: string
+    payment_id: number
+    status: string
+    is_pro: boolean
+  }>(`/trading/elite/admin/pro-payment/${paymentId}/mark-paid/`, {
+    method: "POST",
+    body: JSON.stringify({ note: note || "Marked paid by admin" }),
+  })
+
+
+/* ------------------------------------------------------------------ */
+/* EXPORT API OBJECT */
+/* ------------------------------------------------------------------ */
+export const api = {
+  signup,
+  login,
+  adminLogin,
+  getAccount,
+  createAdditionalAccount,
+  createAccount: createAdditionalAccount,
+  switchAccount,
+  getMarkets,
+  getTradeTypes,
+  getAssets,
+  placeTrade,
+  placeDigitTrade,
+  placeSRobotTrade,
+  placeBulkTrade,
+  getTradeHistory,
+  cancelTrade,
+  getPriceHistory,
+  getRobots,
+  getUserRobots,
+  purchaseRobot,
+  resetDemoBalance,
+  getBots,
+  createBot,
+  toggleBot,
+  getSubscription,
+  subscribe,
+  getDashboard,
+  getWallets,
+  getWalletTransactions,
+  deposit,
+  withdrawOTP,
+  verifyWithdrawal,
+  getMpesaNumber,
+  setMpesaNumber,
+  resendOTP,
+  getForexPairs,
+  getForexCurrentPrices,
+  getForexCurrentPrice,
+  placeForexOrder,
+  getForexPositions,
+  closeForexPosition,
+  closeAllPositions,
+  getForexHistory,
+  getForexRobots,
+  getMyForexRobots,
+  purchaseForexRobot,
+  toggleForexRobot,
+  getForexBotLogs,
+  getForexBotLogsByRobot,
+  getAgents,
+  getAgentById,
+  createAgentDeposit,
+  verifyAgentDeposit,
+  requestAgentWithdrawal,
+  verifyAgentWithdrawal,
+  resendAgentOTP,
+  getAgentDeposits,
+  getAgentWithdrawals,
+  getTransactionHistory,
+  getChatThread,
+  sendChatMessage,
+  markMessagesAsRead,
+  requestReview,
+  getActiveThreads,
+  getAdminChat,
+  sendAdminMessage,
+  adminMarkMessagesRead,
+  adminBlockUser,
+  verifyEmailOtp,
+  resendEmailOtp,
+  requestPasswordReset,
+  verifyPasswordResetOtp,
+  confirmPasswordReset,
+  initiateTransfer,
+  verifyTransfer,
+  generateSignal,
+  appealSuspension,
+  initiateAudioCall,
+  answerAudioCall,
+  endAudioCall,
+  getMissedCalls,
+  closeEAPositions,
+  listMpesaNotifications,
+  markMpesaRead,
+  submitKYC,
+  createMT5Account,
+  getMT5Accounts,
+  switchMT5Account,
+  getMT5Positions,
+  openMT5Position,
+  closeMT5Position,
+  getEliteConfig,
+  saveEliteConfig,
+  validateEliteCode,
+  startEliteRun,
+  getEliteStatus,
+  resetEliteRun,
+  stopEliteRun,
+  upgradeElite,
+  initiateEliteProMpesa, 
+  getEliteProPaymentStatus,
+  activateElitePro,
+  adminMarkEliteProPaid,
+}
