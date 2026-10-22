@@ -1,0 +1,232 @@
+# trading/admin.py
+from django.contrib import admin
+from .models import MarketType, Market, TradeType, Robot, UserRobot, TradingSetting, Trade, Signal, EliteRobotConfig, EliteProPayment
+
+
+@admin.register(MarketType)
+class MarketTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'profit_multiplier')
+    search_fields = ('name',)
+
+
+@admin.register(Market)
+class MarketAdmin(admin.ModelAdmin):
+    list_display = ('name', 'market_type', 'profit_multiplier')
+    list_filter = ('market_type',)
+    search_fields = ('name',)
+
+
+@admin.register(TradeType)
+class TradeTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
+
+@admin.register(Robot)
+class RobotAdmin(admin.ModelAdmin):
+    list_display = (
+        'name', 
+        'is_deriv_robot', 
+        'is_s_digit_robot', 
+        'is_bulk_robot',          # ← NEW
+        'default_digit_contract_type',
+        'max_bulk_trades',        # ← NEW
+        'price', 
+        'discounted_price', 
+        'effective_price', 
+        'win_rate', 
+        'available_for_demo',
+        'is_elite_robot'
+    )
+    list_filter = (
+        'is_deriv_robot', 
+        'is_s_digit_robot', 
+        'is_bulk_robot',          # ← NEW
+        'available_for_demo',
+        'is_elite_robot'
+    )
+    search_fields = ('name',)
+    readonly_fields = ('effective_price',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'image', 'price', 'discounted_price',
+                      'available_for_demo', 'win_rate')
+        }),
+        ('Deriv Premium Robot Settings', {
+            'fields': ('is_deriv_robot', 'deriv_access_key'),
+            'classes': ('collapse',),
+            'description': 'Only fill deriv_access_key if is_deriv_robot = True'
+        }),
+        ('S-Digit Robot Settings', {
+            'fields': ('is_s_digit_robot', 'default_digit_contract_type'),
+            'classes': ('collapse',),
+            'description': 'Only for S-Digit Robots (Over/Under, Matches/Differs, Even/Odd)'
+        }),
+        ('Bulk Trades AI Settings', {          # ← NEW SECTION
+            'fields': ('is_bulk_robot', 'max_bulk_trades'),
+            'classes': ('collapse',),
+            'description': 'Only for Bulk Trades AI robots. max_bulk_trades = how many trades the robot can place in one request (1-50)'
+        }),
+        ('Elite Robot (Most Expensive)', {
+            'fields': ('is_elite_robot',),
+            'classes': ('collapse',),
+            'description': 'Mark ONLY ONE robot as the Elite robot.'
+        }),
+    )
+
+
+@admin.register(UserRobot)
+class UserRobotAdmin(admin.ModelAdmin):
+    list_display = (
+        'user', 'robot', 'win_rate', 'effective_win_rate_display',
+        'is_used', 'is_setting', 'is_upgraded', 'purchased_at', 'purchased_price'
+    )
+    list_filter = ('purchased_at', 'robot', 'is_used', 'is_setting', 'is_upgraded')
+    search_fields = ('user__username', 'robot__name')
+    list_editable = ('win_rate', 'is_used', 'is_setting', 'is_upgraded')
+    readonly_fields = ('purchased_at', 'purchased_price', 'effective_win_rate_display')
+    fields = (
+        'user', 'robot', 'win_rate', 'effective_win_rate_display',
+        'is_used', 'is_setting', 'is_upgraded', 'purchased_at', 'purchased_price'
+    )
+
+    @admin.display(description='Effective win rate')
+    def effective_win_rate_display(self, obj):
+        if obj is None:
+            return '-'
+        rate = obj.get_effective_win_rate()
+        source = 'user override' if obj.win_rate is not None else 'robot default'
+        return f'{rate}% ({source})'
+
+
+@admin.register(TradingSetting)
+class TradingSettingAdmin(admin.ModelAdmin):
+    list_display = ('martingale_multiplier',)
+    # Ensure only one instance
+    def has_add_permission(self, request):
+        return not TradingSetting.objects.exists()
+
+
+@admin.register(Trade)
+class TradeAdmin(admin.ModelAdmin):
+    # Enhanced list_display to show both regular and digit trades clearly
+    list_display = (
+        'user', 
+        'market', 
+        'trade_type', 
+        'direction', 
+        'is_digit_trade', 
+        'digit_contract_type', 
+        'digit_barrier', 
+        'last_digit_outcome',
+        'amount', 
+        'is_win', 
+        'profit', 
+        'timestamp'
+    )
+    
+    # Better filtering for digit vs regular trades
+    list_filter = (
+        'is_win', 
+        'used_martingale', 
+        'is_digit_trade', 
+        'digit_contract_type', 
+        'timestamp'
+    )
+    
+    search_fields = ('user__username', 'market__name')
+    
+    readonly_fields = (
+        'profit', 
+        'session_profit_before',
+        'last_digit_outcome'   # Good to see the actual outcome
+    )
+
+    # Make admin interface cleaner by grouping fields
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('user', 'account', 'market', 'trade_type', 'direction', 'amount', 'timestamp')
+        }),
+        ('Trade Result', {
+            'fields': ('is_win', 'profit', 'session_profit_before')
+        }),
+        ('Martingale & Robot', {
+            'fields': ('used_martingale', 'martingale_level', 'used_robot'),
+            'classes': ('collapse',),
+        }),
+        ('S Digit Trading', {
+            'fields': ('is_digit_trade', 'digit_contract_type', 'digit_barrier', 'last_digit_outcome'),
+            'classes': ('collapse',),
+            'description': 'Only filled for S Digit (Over/Under/Matches etc.) trades'
+        }),
+        ('Additional Data', {
+            'fields': ('is_demo', 'is_copied', 'entry_spot', 'exit_spot', 'current_spot'),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(Signal)
+class SignalAdmin(admin.ModelAdmin):
+    list_display = ('user', 'market', 'direction', 'probability', 'take_profit', 'stop_loss', 'generated_at')
+    list_filter = ('direction', 'generated_at')
+    search_fields = ('user__username', 'market__name')
+
+@admin.register(EliteRobotConfig)
+class EliteRobotConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        'user', 'robot', 'target_market', 'stake',
+        'target_profit', 'is_running', 'is_paused', 'is_pro', 'current_profit',
+        'config_code', 'code_used', 'updated_at'
+    )
+    list_filter = ('is_running', 'is_paused', 'is_pro', 'code_used', 'target_market')
+    search_fields = ('user__username', 'robot__name', 'config_code', 'target_market')
+    readonly_fields = (
+        'config_code', 'code_used', 'code_expires_at',
+        'paused_at', 'pro_upgraded_at', 'created_at', 'updated_at'
+    )
+    raw_id_fields = ('user', 'robot')
+    actions = ['pause_elite_runs', 'resume_elite_runs']
+
+    @admin.action(description='Pause selected Elite robot runs')
+    def pause_elite_runs(self, request, queryset):
+        paused_count = 0
+        skipped = 0
+        for config in queryset:
+            if config.pause_by_admin(reason='Paused by admin'):
+                paused_count += 1
+            else:
+                skipped += 1
+        self.message_user(
+            request,
+            f'Paused {paused_count} Elite run(s). Skipped {skipped} (not running or already paused).'
+        )
+
+    @admin.action(description='Resume selected Elite robot runs')
+    def resume_elite_runs(self, request, queryset):
+        resumed_count = 0
+        skipped = 0
+        for config in queryset:
+            if config.resume_by_admin():
+                resumed_count += 1
+            else:
+                skipped += 1
+        self.message_user(
+            request,
+            f'Resumed {resumed_count} Elite run(s). Skipped {skipped} (not paused or not running).'
+        )
+
+@admin.register(EliteProPayment)
+class EliteProPaymentAdmin(admin.ModelAdmin):
+    list_display = (
+        'user', 'phone_number', 'amount_usd', 'amount_kes',
+        'status', 'mpesa_receipt', 'checkout_request_id', 'created_at', 'paid_at'
+    )
+    list_filter = ('status', 'created_at')
+    search_fields = ('user__username', 'phone_number', 'mpesa_receipt', 'checkout_request_id')
+    readonly_fields = (
+        'merchant_request_id', 'checkout_request_id', 'mpesa_receipt',
+        'result_code', 'result_desc', 'created_at', 'updated_at', 'paid_at'
+    )
+    raw_id_fields = ('user', 'config')
