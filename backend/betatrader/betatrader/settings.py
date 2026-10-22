@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from urllib.parse import urlparse
 
 from decouple import config, Csv
 import dj_database_url
@@ -65,16 +64,32 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'projectx.middleware.DatabaseRetryMiddleware',  # Update this path if needed
+    # 'projectx.middleware.DatabaseRetryMiddleware',  # Commented out - doesn't exist yet
 ]
 
-ROOT_URLCONF = 'betatrader.urls'  # Changed for new project
+ROOT_URLCONF = 'betatrader.urls'
 AUTH_USER_MODEL = 'accounts.User'
 ASGI_APPLICATION = 'betatrader.asgi.application'
 
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
+]
+
+# ====================== TEMPLATES ======================
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
 ]
 
 # ====================== DATABASE ======================
@@ -185,7 +200,7 @@ if not DERIV_OAUTH_REDIRECT_URI:
 # ====================== OTHER ======================
 OPENAI_API_KEY = config('OPENAI_API_KEY', default=None)
 OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-3.5-turbo')
-POLYGON_API_KEY = config('POLYGON_API_KEY')  # Move this to .env
+POLYGON_API_KEY = config('POLYGON_API_KEY', default='')
 
 # Session / Cookies
 SESSION_COOKIE_AGE = 1209600
