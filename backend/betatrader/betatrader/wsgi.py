@@ -1,5 +1,5 @@
 """
-WSGI config for projectx project.
+WSGI config for betatrader project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'projectx.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'betatrader.settings')
 
 application = get_wsgi_application()

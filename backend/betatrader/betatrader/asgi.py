@@ -1,5 +1,5 @@
 """
-ASGI config for projectx
+ASGI config for betatrader
 """
 
 import os
@@ -15,7 +15,7 @@ from channels.auth import AuthMiddlewareStack
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'projectx.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'betatrader.settings')
 
 django.setup()
 
