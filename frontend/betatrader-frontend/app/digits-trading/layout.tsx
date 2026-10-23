@@ -1,4 +1,3 @@
-// app/digits-trading/layout.tsx
 "use client";
 
 import type React from "react";
@@ -94,9 +93,7 @@ export default function DigitsTradingLayout({ children }: DigitsTradingLayoutPro
     };
   }, [isModalActive]);
 
-  const handleSwitchAccount = async (_account: Account) => {
-    // unchanged
-  };
+  const handleSwitchAccount = async (_account: Account) => {};
 
   const handleLogout = () => {
     localStorage.clear();
@@ -112,12 +109,12 @@ export default function DigitsTradingLayout({ children }: DigitsTradingLayoutPro
   if (isLoading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        Loading...
+        <div className="text-cyan-500 animate-pulse">Loading...</div>
       </div>
     );
   if (error)
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500 bg-background">
+      <div className="min-h-screen flex items-center justify-center text-rose-500 bg-background">
         {error}
       </div>
     );
@@ -136,7 +133,8 @@ export default function DigitsTradingLayout({ children }: DigitsTradingLayoutPro
       />
 
       <div className="flex-1 flex w-full">
-        <aside className="hidden lg:block lg:w-64 xl:w-72 shrink-0 border-r border-border bg-card">
+        <aside className="hidden lg:block lg:w-64 xl:w-72 shrink-0 border-r border-slate-200 dark:border-white/10
+          bg-white dark:bg-white/[0.03] dark:backdrop-blur-xl">
           <Sidebar
             loginType={loginType}
             activeAccount={activeAccount}

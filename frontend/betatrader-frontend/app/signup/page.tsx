@@ -12,11 +12,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Eye, EyeOff, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Clock, AlertCircle, Globe } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+
+const COUNTRIES = [
+  "Kenya", "Uganda", "Tanzania", "Rwanda", "Nigeria", "Ghana", "South Africa",
+  "United States", "United Kingdom", "Canada", "Australia", "India", "Germany",
+  "France", "Brazil", "Mexico", "Japan", "China", "South Korea", "Singapore",
+  "United Arab Emirates", "Saudi Arabia", "Egypt", "Morocco", "Other"
+];
 
 export default function SignupPage() {
   const searchParams = useSearchParams();
@@ -35,6 +42,7 @@ export default function SignupPage() {
     confirmPassword: "",
     username: "",
     phone: "",
+    country: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -58,7 +66,7 @@ export default function SignupPage() {
   const accountDescription = isDerivAccount
     ? "Coming soon - Trade synthetic indices & more"
     : isRealAccount
-    ? "Trade with real money • KYC (Proof of Identity) required to enable withdrawals & full features"
+    ? "Trade with real money • KYC required for withdrawals"
     : "Practice trading with $10,000 virtual balance";
 
   const iconPath = isDerivAccount 
@@ -81,7 +89,7 @@ export default function SignupPage() {
     }
   }, [showOtpScreen, secondsLeft]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -90,8 +98,8 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.email || !formData.password || !formData.username) {
-      toast.error("Please fill in all required fields");
+    if (!formData.email || !formData.password || !formData.username || !formData.country) {
+      toast.error("Please fill in all required fields including country");
       setIsLoading(false);
       return;
     }
@@ -117,6 +125,7 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
+        country: formData.country,
         account_type: accountType,
         referral_code: referralCode,
       });
@@ -176,13 +185,11 @@ export default function SignupPage() {
       }
       toast.success("Email verified successfully!");
 
-      // KYC Notice for Real accounts
       if (isRealAccount) {
         toast.info(
-          "KYC Required: Please submit your Proof of Identity (National ID/Passport + Selfie) to unlock withdrawals and full trading features.",
+          "KYC Required: Please submit your Proof of Identity to unlock withdrawals.",
           { duration: 8000 }
         );
-        // Optional: router.push("/kyc"); // uncomment when KYC page is ready
       }
 
       router.push("/dashboard");
@@ -212,19 +219,18 @@ export default function SignupPage() {
     }
   };
 
-  // OTP Screen
   if (showOtpScreen) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
            style={{ backgroundImage: "url('/background.jpg')" }}>
-        <div className="absolute inset-0 bg-black/70 z-0" />
+        <div className="absolute inset-0 bg-slate-950/80 z-0" />
         
-        <Card className="w-full max-w-md border-white/20 bg-white/5 backdrop-blur-sm relative z-10">
+        <Card className="w-full max-w-md border-cyan-500/20 bg-slate-900/60 backdrop-blur-xl relative z-10 shadow-2xl shadow-cyan-500/10">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl text-white">Verify Your Email</CardTitle>
             <CardDescription className="text-white/70">
               We sent a 6-digit code to <br />
-              <span className="font-medium">{formData.email}</span>
+              <span className="font-medium text-cyan-400">{formData.email}</span>
             </CardDescription>
           </CardHeader>
 
@@ -239,7 +245,7 @@ export default function SignupPage() {
                   onChange={(e) => handleOtpChange(i, e)}
                   onKeyDown={(e) => handleOtpKeyDown(i, e)}
                   ref={(el) => { otpRefs.current[i] = el; }}
-                  className="w-12 h-12 text-center text-lg font-semibold bg-white/10 border-white/20 text-white"
+                  className="w-12 h-12 text-center text-lg font-semibold bg-white/10 border-cyan-500/30 text-white focus:border-cyan-400"
                   disabled={isLoading}
                 />
               ))}
@@ -247,7 +253,7 @@ export default function SignupPage() {
 
             <Button
               onClick={verifyOtp}
-              className="w-full bg-white text-black hover:bg-white/90 font-semibold"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-6"
               disabled={isLoading}
             >
               {isLoading ? "Verifying…" : "Verify & Continue"}
@@ -259,7 +265,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={resendOtp}
-                    className="font-medium text-white hover:underline"
+                    className="font-medium text-cyan-400 hover:underline"
                     disabled={isLoading}
                   >
                     Resend code
@@ -287,76 +293,53 @@ export default function SignupPage() {
     );
   }
 
-  // Main Signup Page
   return (
     <div 
       className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('/background.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black/70 z-0" />
+      <div className="absolute inset-0 bg-slate-950/80 z-0" />
 
-      <Card className="w-full max-w-md border-white/20 bg-white/5 backdrop-blur-sm relative z-10">
+      <Card className="w-full max-w-md border-cyan-500/20 bg-slate-900/60 backdrop-blur-xl relative z-10 shadow-2xl shadow-cyan-500/10">
         <CardHeader className="space-y-2">
-          <Link href="/" className="inline-flex items-center text-white/70 hover:text-white">
+          <Link href="/" className="inline-flex items-center text-white/70 hover:text-cyan-400 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Link>
-          <CardTitle className="text-2xl text-white">Sign Up</CardTitle>
+          <CardTitle className="text-2xl text-white">Create Account</CardTitle>
           <CardDescription className="text-white/70">{accountDescription}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Account Type Selector */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setAccountType("standard")}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
-                accountType === "standard"
-                  ? "bg-white text-black shadow"
-                  : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-              }`}
-            >
-              Real
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccountType("demo")}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
-                accountType === "demo"
-                  ? "bg-white text-black shadow"
-                  : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-              }`}
-            >
-              Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccountType("deriv")}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
-                accountType === "deriv"
-                  ? "bg-white text-black shadow"
-                  : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-              }`}
-            >
-              Deriv
-            </button>
+          <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+            {(["standard", "demo", "deriv"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setAccountType(type)}
+                className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
+                  accountType === type
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {type === "standard" ? "Real" : type === "demo" ? "Demo" : "Deriv"}
+              </button>
+            ))}
           </div>
 
-          {/* KYC Info Banner for Real Accounts */}
           {isRealAccount && (
             <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
               <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="text-amber-200">
-                <strong>Real Account Notice:</strong> After creating your account and verifying your email, you will need to submit Proof of Identity (KYC) to enable withdrawals and full platform features.
+              <div className="text-amber-200 text-xs">
+                <strong>Real Account:</strong> KYC (Proof of Identity) is required to enable withdrawals.
               </div>
             </div>
           )}
 
-          {/* Account Info */}
-          <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-cyan-500/20">
             <div className="flex-shrink-0">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden shadow-md bg-gradient-to-br from-white/10 to-white/5">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden shadow-md bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30">
                 <Image
                   src={iconPath}
                   alt={accountLabel}
@@ -372,29 +355,27 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* Deriv Coming Soon Section */}
           {isDerivAccount ? (
-            <div className="bg-white/10 border border-white/20 rounded-2xl p-8 text-center">
+            <div className="bg-white/5 border border-cyan-500/20 rounded-2xl p-8 text-center">
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                  <Clock className="w-8 h-8 text-emerald-400" />
+                <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center border border-cyan-500/30">
+                  <Clock className="w-8 h-8 text-cyan-400" />
                 </div>
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Deriv Account</h3>
               <p className="text-white/70 mb-6">
-                Deriv account registration is coming soon.<br />
-                We are working hard to bring you seamless Deriv integration.
+                Deriv registration is coming soon.<br />
+                We are working hard to bring you seamless integration.
               </p>
               <Button
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
+                className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
                 disabled
               >
                 Coming Soon
               </Button>
             </div>
           ) : (
-            /* Real & Demo Signup Form */
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Username</label>
@@ -404,7 +385,7 @@ export default function SignupPage() {
                   placeholder="john_doe"
                   value={formData.username}
                   onChange={handleChange}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-cyan-400"
                   disabled={isLoading}
                 />
               </div>
@@ -417,7 +398,7 @@ export default function SignupPage() {
                   placeholder="john@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-cyan-400"
                   disabled={isLoading}
                 />
               </div>
@@ -430,9 +411,29 @@ export default function SignupPage() {
                   placeholder="+254 700 000000"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-cyan-400"
                   disabled={isLoading}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-cyan-400" />
+                  Country <span className="text-red-400">*</span>
+                </label>
+                <select
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md bg-white/10 border border-white/20 text-white focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                  disabled={isLoading}
+                  required
+                >
+                  <option value="" className="bg-slate-900">Select your country</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c} className="bg-slate-900">{c}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
@@ -444,7 +445,7 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 focus:border-cyan-400"
                     disabled={isLoading}
                   />
                   <button
@@ -466,7 +467,7 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 focus:border-cyan-400"
                     disabled={isLoading}
                   />
                   <button
@@ -481,7 +482,7 @@ export default function SignupPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-white text-black hover:bg-white/90 font-semibold py-6"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-6 shadow-lg shadow-cyan-500/25"
                 disabled={isLoading}
               >
                 {isLoading ? "Creating Account…" : "Create Account"}
@@ -491,7 +492,7 @@ export default function SignupPage() {
                 Already have an account?{" "}
                 <Link 
                   href={`/login?type=${accountType}`} 
-                  className="text-white hover:underline font-semibold"
+                  className="text-cyan-400 hover:underline font-semibold"
                 >
                   Log in
                 </Link>

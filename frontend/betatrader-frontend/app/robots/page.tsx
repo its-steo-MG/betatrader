@@ -1,4 +1,3 @@
-// app/robots/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -63,39 +62,40 @@ export default function RobotsPage() {
   }
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
-      <div className="fixed inset-0 z-0 hidden dark:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl" />
-      </div>
-      <div className="fixed inset-0 z-0 block dark:hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+    <div className="relative min-h-screen text-foreground">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Trading Robots</h1>
-            <p className="text-slate-500 dark:text-zinc-400 text-lg">Purchase and manage automated trading robots</p>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-800 dark:text-white">Trading Robots</h1>
+            <p className="text-slate-500 dark:text-white/50 text-lg">Purchase and manage automated trading robots</p>
           </div>
 
-          <div className="rounded-3xl p-6 sm:p-8 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 shadow-lg">
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-2">
+          {/* Balance Card - Clay/Liquid */}
+          <div className="rounded-3xl p-6 sm:p-8
+            bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6,-8px_-8px_20px_#ffffff]
+            dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl">
+            <p className="text-sm text-slate-500 dark:text-white/50 mb-2">
               {loginType === "demo" ? "Demo Account" : "Real Account"}
             </p>
-            <p className="text-5xl sm:text-6xl font-bold tracking-tighter">${formatCurrency(activeAccount?.balance || 0)}</p>
+            <p className="text-5xl sm:text-6xl font-bold tracking-tighter text-cyan-600 dark:text-cyan-400">
+              ${formatCurrency(activeAccount?.balance || 0)}
+            </p>
           </div>
 
           <Tabs defaultValue="marketplace" className="w-full">
-            <TabsList className="inline-flex h-auto w-full p-1 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-3xl">
-              <TabsTrigger value="marketplace" className="flex-1 py-3.5 text-base font-semibold rounded-3xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsList className="inline-flex h-auto w-full p-1 rounded-2xl
+              bg-slate-100 border border-slate-200 shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]
+              dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none">
+              <TabsTrigger value="marketplace" className="flex-1 py-3.5 text-base font-semibold rounded-xl
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white
+                data-[state=active]:shadow-[3px_3px_8px_#0891b2]
+                dark:data-[state=active]:shadow-none">
                 Marketplace
               </TabsTrigger>
-              <TabsTrigger value="my-robots" className="flex-1 py-3.5 text-base font-semibold rounded-3xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+              <TabsTrigger value="my-robots" className="flex-1 py-3.5 text-base font-semibold rounded-xl
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white
+                data-[state=active]:shadow-[3px_3px_8px_#0891b2]
+                dark:data-[state=active]:shadow-none">
                 My Robots
               </TabsTrigger>
             </TabsList>
@@ -111,20 +111,26 @@ export default function RobotsPage() {
 
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="text-center space-y-4 rounded-3xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 px-10 py-8">
-            <div className="w-16 h-16 border-4 border-slate-200 dark:border-zinc-700 border-t-pink-500 rounded-full animate-spin mx-auto" />
-            <p className="text-xl font-semibold">Loading Robots...</p>
+          <div className="text-center space-y-4 rounded-3xl px-10 py-8
+            bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6,-8px_-8px_20px_#ffffff]
+            dark:bg-slate-900/95 dark:border-white/10 dark:shadow-none dark:backdrop-blur-2xl">
+            <div className="w-16 h-16 border-4 border-slate-200 dark:border-white/10 border-t-cyan-500 rounded-full animate-spin mx-auto" />
+            <p className="text-xl font-semibold text-slate-800 dark:text-white">Loading Robots...</p>
           </div>
         </div>
       )}
 
       {error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="text-center max-w-md p-8 rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+          <div className="text-center max-w-md p-8 rounded-3xl
+            bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6,-8px_-8px_20px_#ffffff]
+            dark:bg-slate-900/95 dark:border-white/10 dark:shadow-none dark:backdrop-blur-2xl">
             <div className="text-6xl mb-6">⚠️</div>
-            <h2 className="text-2xl font-bold mb-3">Something went wrong</h2>
-            <p className="text-slate-500 dark:text-zinc-400 mb-8">{error}</p>
-            <button onClick={() => window.location.reload()} className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl">
+            <h2 className="text-2xl font-bold mb-3 text-slate-800 dark:text-white">Something went wrong</h2>
+            <p className="text-slate-500 dark:text-white/50 mb-8">{error}</p>
+            <button onClick={() => window.location.reload()}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 px-8 rounded-2xl
+                shadow-[4px_4px_12px_#0891b2,-2px_-2px_8px_#22d3ee] dark:shadow-none">
               Retry
             </button>
           </div>

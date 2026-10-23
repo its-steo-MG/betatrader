@@ -138,8 +138,8 @@ export default function LoginPage() {
       if (user && user.kyc_status && user.kyc_status !== "approved") {
         const kycMessage =
           user.kyc_status === "rejected"
-            ? "Your previous KYC submission was rejected. Please resubmit your Proof of Identity."
-            : "Complete your KYC (Proof of Identity) to unlock withdrawals and full platform features.";
+            ? "Your previous KYC submission was rejected. Please resubmit."
+            : "Complete your KYC to unlock withdrawals and full features.";
 
         toast.warning(kycMessage, {
           duration: 7000,
@@ -168,35 +168,27 @@ export default function LoginPage() {
           localStorage.setItem(
             "suspensionDetails",
             JSON.stringify({
-              type: (errorData.code as string).replace("suspended_", "") as
-                | "temporary"
-                | "permanent",
-              reason:
-                (errorData.details as { reason?: string })?.reason ||
-                "Your account has been suspended",
+              type: (errorData.code as string).replace("suspended_", "") as "temporary" | "permanent",
+              reason: (errorData.details as { reason?: string })?.reason || "Your account has been suspended",
               until: (errorData.details as { until?: string })?.until,
-              evidenceStatus:
-                (errorData.details as { evidence_status?: string })
-                  ?.evidence_status || "no_evidence",
-              appealAvailable:
-                (errorData.details as { appeal_available?: boolean })
-                  ?.appeal_available || false,
+              evidenceStatus: (errorData.details as { evidence_status?: string })?.evidence_status || "no_evidence",
+              appealAvailable: (errorData.details as { appeal_available?: boolean })?.appeal_available || false,
             })
           );
 
           toast.error(
             errorData.code === "suspended_temporary"
               ? "Account temporarily suspended."
-              : "Account permanently suspended. Please submit an appeal."
+              : "Account permanently suspended."
           );
 
           router.push("/suspended");
           setIsLoading(false);
           return;
         }
-        toast.error("Invalid email or password. Please try again.");
+        toast.error("Invalid email or password.");
       } else {
-        toast.error("Login failed. Check your connection and try again.");
+        toast.error("Login failed. Check your connection.");
       }
     } finally {
       setIsLoading(false);
@@ -221,7 +213,7 @@ export default function LoginPage() {
       setCanResend(false);
       setOtp(["", "", "", ""]);
     } catch {
-      toast.error("Failed to send code. Try again.");
+      toast.error("Failed to send code.");
     } finally {
       setIsLoading(false);
     }
@@ -254,10 +246,7 @@ export default function LoginPage() {
     }
     setIsLoading(true);
     try {
-      const res = await api.verifyPasswordResetOtp({
-        email: resetEmail,
-        otp: code,
-      });
+      const res = await api.verifyPasswordResetOtp({ email: resetEmail, otp: code });
       if (res.error) {
         toast.error(res.error);
         return;
@@ -292,7 +281,7 @@ export default function LoginPage() {
         toast.error(res.error);
         return;
       }
-      toast.success("Password reset successful! Please log in.");
+      toast.success("Password reset successful!");
       setShowResetModal(false);
       setResetStep("email");
       setOtp(["", "", "", ""]);
@@ -308,9 +297,7 @@ export default function LoginPage() {
     const newOtp = [...otp];
     newOtp[idx] = val;
     setOtp(newOtp);
-    if (val && idx < 3) {
-      otpRefs.current[idx + 1]?.focus();
-    }
+    if (val && idx < 3) otpRefs.current[idx + 1]?.focus();
   };
 
   return (
@@ -319,25 +306,21 @@ export default function LoginPage() {
         className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
         style={{ backgroundImage: "url('/background.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black/70 z-0" />
+        <div className="absolute inset-0 bg-slate-950/80 z-0" />
 
-        <Card className="w-full max-w-md border-white/20 bg-white/5 backdrop-blur-sm relative z-10">
+        <Card className="w-full max-w-md border-cyan-500/20 bg-slate-900/60 backdrop-blur-xl relative z-10 shadow-2xl shadow-cyan-500/10">
           <CardHeader className="space-y-2">
-            <Link
-              href="/"
-              className="inline-flex items-center text-white/70 hover:text-white"
-            >
+            <Link href="/" className="inline-flex items-center text-white/70 hover:text-cyan-400 transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Link>
-            <CardTitle className="text-2xl text-white">Log In</CardTitle>
+            <CardTitle className="text-2xl text-white">Welcome Back</CardTitle>
             <CardDescription className="text-white/70">
-              Choose your trading journey
+              Sign in to your BetaTrader account
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Account Type Tabs — liquid glass card style */}
             <div className="flex gap-1.5 p-1.5 rounded-2xl bg-white/5 border border-white/10">
               {(["standard", "demo", "deriv"] as const).map((type) => (
                 <button
@@ -345,21 +328,14 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setAccountType(type)}
                   disabled={isLoading}
-                  className={`
-                    relative flex-1 py-2.5 px-3 rounded-xl font-medium text-sm transition-all
-                    ${
-                      accountType === type
-                        ? "drop-on-top bg-white text-black shadow"
-                        : "text-white/70 hover:text-white hover:bg-white/10"
-                    }
-                  `}
+                  className={`relative flex-1 py-2.5 px-3 rounded-xl font-medium text-sm transition-all ${
+                    accountType === type
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
+                  }`}
                 >
                   <span className="relative z-[1]">
-                    {type === "standard"
-                      ? "Real"
-                      : type === "demo"
-                      ? "Demo"
-                      : "Deriv"}
+                    {type === "standard" ? "Real" : type === "demo" ? "Demo" : "Deriv"}
                   </span>
                 </button>
               ))}
@@ -369,16 +345,14 @@ export default function LoginPage() {
               <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
                 <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
                 <div className="text-amber-200 text-xs leading-snug">
-                  Real accounts require completed KYC (Proof of Identity) for
-                  withdrawals and full access.
+                  Real accounts require completed KYC for withdrawals.
                 </div>
               </div>
             )}
 
-            {/* Account Info Card */}
-            <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/10">
+            <div className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-cyan-500/20">
               <div className="flex-shrink-0">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden shadow-md border border-cyan-500/30">
                   <Image
                     src={
                       accountType === "standard"
@@ -387,13 +361,7 @@ export default function LoginPage() {
                         ? "/demo-account-icon.png"
                         : "/deriv-account-icon.png"
                     }
-                    alt={
-                      accountType === "standard"
-                        ? "Real Account"
-                        : accountType === "demo"
-                        ? "Demo Account"
-                        : "Deriv Account"
-                    }
+                    alt={accountType === "standard" ? "Real" : accountType === "demo" ? "Demo" : "Deriv"}
                     width={64}
                     height={64}
                     className="w-12 h-12 object-cover"
@@ -402,41 +370,34 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">
-                  {accountType === "standard"
-                    ? "Real Account"
-                    : accountType === "demo"
-                    ? "Demo Account"
-                    : "Deriv Account"}
+                  {accountType === "standard" ? "Real Account" : accountType === "demo" ? "Demo Account" : "Deriv Account"}
                 </h3>
                 <p className="text-sm text-white/70 mt-1 leading-tight">
                   {accountType === "standard"
-                    ? "Trade with real money • KYC required for withdrawals."
+                    ? "Trade with real money"
                     : accountType === "demo"
-                    ? "Practice trading with $10,000 virtual balance."
-                    : "Trade synthetic indices, forex & more on Deriv."}
+                    ? "Practice with $10,000 virtual balance"
+                    : "Trade on Deriv"}
                 </p>
               </div>
             </div>
 
             {accountType === "deriv" ? (
               <div className="space-y-4 pt-2">
-                <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center">
+                <div className="bg-white/5 border border-cyan-500/20 rounded-2xl p-6 text-center">
                   <p className="text-white/80 mb-5 text-sm">
-                    Connect your Deriv account to start trading on Traderiser Pro
+                    Connect your Deriv account to start trading
                   </p>
                   <Button
                     onClick={handleDerivConnect}
-                    className="drop-on-top relative w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-6 text-base flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-6 text-base flex items-center justify-center gap-2"
                   >
-                    <span className="relative z-[1] flex items-center gap-2">
-                      Connect to Deriv Account
-                      <ExternalLink className="w-5 h-5" />
+                    <span className="flex items-center gap-2">
+                      Connect to Deriv <ExternalLink className="w-5 h-5" />
                     </span>
                   </Button>
                 </div>
-                <p className="text-center text-xs text-white/50">
-                  You will be redirected to digister.site
-                </p>
+                <p className="text-center text-xs text-white/50">You will be redirected to digister.site</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -448,15 +409,13 @@ export default function LoginPage() {
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleChange}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-cyan-400"
                     disabled={isLoading}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">
-                    Password
-                  </label>
+                  <label className="text-sm font-medium text-white">Password</label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
@@ -464,7 +423,7 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={handleChange}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 focus:border-cyan-400"
                       disabled={isLoading}
                     />
                     <button
@@ -473,11 +432,7 @@ export default function LoginPage() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
                       disabled={isLoading}
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>
@@ -486,7 +441,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowResetModal(true)}
-                    className="text-sm text-white/70 hover:text-white"
+                    className="text-sm text-cyan-400 hover:text-cyan-300"
                   >
                     Forgot password?
                   </button>
@@ -494,20 +449,15 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="drop-on-top relative w-full bg-white text-black hover:bg-white/90 font-semibold py-6"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-6 shadow-lg shadow-cyan-500/25"
                   disabled={isLoading}
                 >
-                  <span className="relative z-[1]">
-                    {isLoading ? "Logging in..." : "Log In"}
-                  </span>
+                  {isLoading ? "Logging in..." : "Log In"}
                 </Button>
 
                 <p className="text-center text-sm text-white/70">
-                  Dont have an account?{" "}
-                  <Link
-                    href={signupLink}
-                    className="text-white hover:underline font-semibold"
-                  >
+                  Don't have an account?{" "}
+                  <Link href={signupLink} className="text-cyan-400 hover:underline font-semibold">
                     Sign up
                   </Link>
                 </p>
@@ -517,15 +467,13 @@ export default function LoginPage() {
         </Card>
       </div>
 
-      {/* Password Reset Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md border-white/20 bg-white/5 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md border-cyan-500/20 bg-slate-900/80 backdrop-blur-xl">
             <CardHeader className="text-center space-y-2">
               <CardTitle className="text-2xl text-white">Reset Password</CardTitle>
               <CardDescription className="text-white/70">
-                {resetStep === "email" &&
-                  "Enter your email to receive a 4-digit code"}
+                {resetStep === "email" && "Enter your email to receive a 4-digit code"}
                 {resetStep === "otp" && `Enter code sent to ${resetEmail}`}
                 {resetStep === "newPassword" && "Set your new password"}
               </CardDescription>
@@ -543,12 +491,10 @@ export default function LoginPage() {
                   />
                   <Button
                     onClick={startReset}
-                    className="drop-on-top relative w-full bg-white text-black hover:bg-white/90 font-semibold"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold"
                     disabled={isLoading || !resetEmail}
                   >
-                    <span className="relative z-[1]">
-                      {isLoading ? "Sending..." : "Send Code"}
-                    </span>
+                    {isLoading ? "Sending..." : "Send Code"}
                   </Button>
                 </>
               )}
@@ -563,32 +509,22 @@ export default function LoginPage() {
                         maxLength={1}
                         value={d}
                         onChange={(e) => handleOtpChange(i, e.target.value)}
-                        ref={(el) => {
-                          otpRefs.current[i] = el;
-                        }}
-                        className="w-12 h-12 text-center text-lg font-semibold bg-white/10 border-white/20 text-white"
+                        ref={(el) => { otpRefs.current[i] = el; }}
+                        className="w-12 h-12 text-center text-lg font-semibold bg-white/10 border-cyan-500/30 text-white"
                         disabled={isLoading}
                       />
                     ))}
                   </div>
-
                   <Button
                     onClick={verifyOtp}
-                    className="drop-on-top relative w-full bg-white text-black hover:bg-white/90 font-semibold"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold"
                     disabled={isLoading}
                   >
-                    <span className="relative z-[1]">
-                      {isLoading ? "Verifying..." : "Verify Code"}
-                    </span>
+                    {isLoading ? "Verifying..." : "Verify Code"}
                   </Button>
-
                   <p className="text-center text-sm text-white/70">
                     {canResend ? (
-                      <button
-                        type="button"
-                        onClick={resendOtp}
-                        className="text-white hover:underline font-medium"
-                      >
+                      <button type="button" onClick={resendOtp} className="text-cyan-400 hover:underline font-medium">
                         Resend code
                       </button>
                     ) : (
@@ -601,63 +537,39 @@ export default function LoginPage() {
               {resetStep === "newPassword" && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">
-                      New Password
-                    </label>
+                    <label className="text-sm font-medium text-white">New Password</label>
                     <div className="relative">
                       <Input
                         type={showNewPass ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
+                        className="bg-white/10 border-white/20 text-white pr-10"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPass(!showNewPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
-                      >
-                        {showNewPass ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
+                      <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70">
+                        {showNewPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
-
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">
-                      Confirm Password
-                    </label>
+                    <label className="text-sm font-medium text-white">Confirm Password</label>
                     <div className="relative">
                       <Input
                         type={showConfirmPass ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
+                        className="bg-white/10 border-white/20 text-white pr-10"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPass(!showConfirmPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
-                      >
-                        {showConfirmPass ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
+                      <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70">
+                        {showConfirmPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
-
                   <Button
                     onClick={confirmNewPassword}
-                    className="drop-on-top relative w-full bg-white text-black hover:bg-white/90 font-semibold"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold"
                     disabled={isLoading}
                   >
-                    <span className="relative z-[1]">
-                      {isLoading ? "Saving..." : "Reset Password"}
-                    </span>
+                    {isLoading ? "Saving..." : "Reset Password"}
                   </Button>
                 </>
               )}

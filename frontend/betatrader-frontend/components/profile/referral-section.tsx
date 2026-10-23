@@ -20,8 +20,8 @@ interface AccountData {
   };
 }
 
-const card = "bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800";
-const field = "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white";
+const card = "bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl";
+const field = "bg-white dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-[inset_2px_2px_4px_#e2e8f0] dark:shadow-none";
 
 export default function ReferralSection() {
   const [referralLink, setReferralLink] = useState("");
@@ -65,11 +65,11 @@ export default function ReferralSection() {
 
   const shareLink = () => {
     if (navigator.share) {
-      navigator.share({ title: "Join TradeRiser with my referral", text: "Check out TradeRiser", url: referralLink }).catch(() => {
-        window.open(`https://wa.me/?text=${encodeURIComponent("Join me on TradeRiser: " + referralLink)}`);
+      navigator.share({ title: "Join Beta Trader with my referral", text: "Check out Beta Trader", url: referralLink }).catch(() => {
+        window.open(`https://wa.me/?text=${encodeURIComponent("Join me on Beta Trader: " + referralLink)}`);
       });
     } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent("Join me on TradeRiser: " + referralLink)}`);
+      window.open(`https://wa.me/?text=${encodeURIComponent("Join me on Beta Trader: " + referralLink)}`);
     }
   };
 
@@ -137,25 +137,25 @@ export default function ReferralSection() {
   return (
     <Card className={card}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Gift className="w-5 h-5 text-pink-500" /> Your Referral Link</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-slate-800 dark:text-white"><Gift className="w-5 h-5 text-cyan-500" /> Your Referral Link</CardTitle>
         <CardDescription>Share this link with friends and earn rewards when they sign up</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Input readOnly value={referralLink} className={`${field} font-mono text-sm`} />
-          <Button onClick={copyLink} size="icon" className="shrink-0 bg-pink-600 text-white"><Copy className="w-4 h-4" /></Button>
-          <Button onClick={shareLink} size="icon" className="shrink-0 bg-pink-600 text-white"><Share2 className="w-4 h-4" /></Button>
+          <Button onClick={copyLink} size="icon" className="shrink-0 bg-cyan-600 text-white"><Copy className="w-4 h-4" /></Button>
+          <Button onClick={shareLink} size="icon" className="shrink-0 bg-cyan-600 text-white"><Share2 className="w-4 h-4" /></Button>
         </div>
-        <p className="text-xs text-slate-500 dark:text-zinc-400">Anyone who signs up using this link will be associated with your MarketO account.</p>
+        <p className="text-xs text-slate-500 dark:text-white/50">Anyone who signs up using this link will be associated with your MarketO account.</p>
 
         {!isMpesaConnected ? (
           <div className="mt-4 space-y-3">
-            <Button onClick={() => setShowForm((v) => !v)} className="w-full bg-pink-600 hover:bg-pink-700 text-white">
+            <Button onClick={() => setShowForm((v) => !v)} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">
               {showForm ? <><X className="w-4 h-4" /> Cancel</> : <>Connect to M-Pesa App <ChevronDown className="w-4 h-4" /></>}
             </Button>
             {showForm && (
-              <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-5 space-y-4">
-                <h3 className="font-semibold">Connect to M-Pesa</h3>
+              <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-5 space-y-4">
+                <h3 className="font-semibold text-slate-800 dark:text-white">Connect to M-Pesa</h3>
                 <div>
                   <Label htmlFor="realName">Real Name (as in M-Pesa)</Label>
                   <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} className={`${field} mt-2`} placeholder="Enter your full name" />
@@ -172,7 +172,7 @@ export default function ReferralSection() {
                   <Label htmlFor="pin">4-Digit PIN</Label>
                   <Input id="pin" type="password" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} className={`${field} mt-2 text-center tracking-widest`} placeholder="••••" />
                 </div>
-                <Button onClick={handleConnect} disabled={connectLoading} className="w-full bg-pink-600 hover:bg-pink-700 text-white">
+                <Button onClick={handleConnect} disabled={connectLoading} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">
                   {connectLoading ? "Connecting..." : "Connect"}
                 </Button>
               </div>
@@ -180,14 +180,14 @@ export default function ReferralSection() {
           </div>
         ) : (
           <div className="space-y-3 mt-4">
-            <p className="text-emerald-600 dark:text-emerald-400 font-medium text-center">M-Pesa Connected Successfully!</p>
-            <Button onClick={openMpesaApp} className="w-full bg-pink-600 hover:bg-pink-700 text-white">Login to M-Pesa App</Button>
+            <p className="text-cyan-600 dark:text-cyan-400 font-medium text-center">M-Pesa Connected Successfully!</p>
+            <Button onClick={openMpesaApp} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">Login to M-Pesa App</Button>
             {!isMessagesConnected ? (
-              <Button onClick={connectMessages} disabled={connectLoading} className="w-full bg-slate-900 dark:bg-zinc-800 text-white">
+              <Button onClick={connectMessages} disabled={connectLoading} className="w-full bg-slate-900 dark:bg-white/10 text-white">
                 <MessageCircle className="w-5 h-5 mr-2" /> {connectLoading ? "Connecting..." : "Connect to Messages"}
               </Button>
             ) : (
-              <Button onClick={openMessagesApp} className="w-full bg-slate-900 dark:bg-zinc-800 text-white">
+              <Button onClick={openMessagesApp} className="w-full bg-slate-900 dark:bg-white/10 text-white">
                 <MessageCircle className="w-5 h-5 mr-2" /> Open Messages
               </Button>
             )}

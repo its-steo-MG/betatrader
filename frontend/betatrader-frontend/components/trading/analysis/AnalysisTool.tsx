@@ -33,10 +33,7 @@ export default function AnalysisTool({ activeMarket = "volatility-10-1s", onUseS
   useEffect(() => {
     const feeds = createMarketFeeds({ activeMarket });
     const off = feeds.subscribe((s: DigitStore) => setStore({ ...s }));
-    return () => {
-      off();
-      feeds.destroy();
-    };
+    return () => { off(); feeds.destroy(); };
   }, [activeMarket]);
 
   const scan = useMemo(() => scanAll(store, family, windowSize), [store, family, windowSize]);
@@ -48,15 +45,8 @@ export default function AnalysisTool({ activeMarket = "volatility-10-1s", onUseS
   const armed = isTradeable(active);
 
   useEffect(() => {
-    if (!armed) {
-      keyRef.current = "";
-      setCount(null);
-      return;
-    }
-    if (keyRef.current !== key) {
-      keyRef.current = key;
-      setCount(COUNTDOWN_FROM);
-    }
+    if (!armed) { keyRef.current = ""; setCount(null); return; }
+    if (keyRef.current !== key) { keyRef.current = key; setCount(COUNTDOWN_FROM); }
   }, [key, armed]);
 
   useEffect(() => {
@@ -73,91 +63,105 @@ export default function AnalysisTool({ activeMarket = "volatility-10-1s", onUseS
     if (family === "evenodd") {
       const even = d % 2 === 0;
       return (
-        <span key={i} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs font-bold ${even ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"}`}>
+        <span key={i} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold
+          ${even ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300" : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"}`}>
           {even ? "E" : "O"}
         </span>
       );
     }
     const hit = active ? isWinningDigit(active.kind, active.barrier, d) : false;
     return (
-      <span key={i} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded text-xs font-bold ${hit ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"}`}>
+      <span key={i} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold
+        ${hit ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300" : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"}`}>
         {d}
       </span>
     );
   };
 
   return (
-    <div className={`flex h-full w-full flex-col gap-3 overflow-y-auto p-3 text-slate-900 dark:text-white ${className}`}>
+    <div className={`flex h-full w-full flex-col gap-3 overflow-y-auto p-3 ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold tracking-wide">MULTI-MARKET DIGIT SCANNER</span>
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+          <span className="text-sm font-semibold tracking-wide text-slate-800 dark:text-white">MULTI-MARKET DIGIT SCANNER</span>
+          <span className="h-2 w-2 rounded-full bg-cyan-500" />
+          <span className="text-[11px] text-slate-500 dark:text-white/50">
             {Object.keys(store).length} markets · live: {marketLabel(activeMarket)}
           </span>
         </div>
         <div className="flex items-center gap-1">
           {WINDOWS.map((w) => (
-            <button key={w} onClick={() => setWindowSize(w)} className={`rounded px-2 py-1 text-[11px] font-medium ${windowSize === w ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"}`}>
+            <button key={w} onClick={() => setWindowSize(w)}
+              className={`rounded-lg px-2 py-1 text-[11px] font-medium transition
+                ${windowSize === w 
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[2px_2px_6px_#0891b2]" 
+                  : "bg-slate-100 text-slate-600 shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff] dark:bg-white/10 dark:text-white/70 dark:shadow-none"}`}>
               {w}t
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-zinc-900">
+      <div className="flex gap-1 rounded-xl p-1 bg-slate-100 shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff] dark:bg-white/5 dark:shadow-none">
         {FAMILIES.map((f) => (
-          <button key={f.id} onClick={() => { setFamily(f.id); setFocus(null); }} className={`flex-1 rounded-md px-2 py-2 text-xs font-semibold transition ${family === f.id ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white"}`}>
+          <button key={f.id} onClick={() => { setFamily(f.id); setFocus(null); }}
+            className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition
+              ${family === f.id 
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[2px_2px_6px_#0891b2]" 
+                : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"}`}>
             {f.label}
           </button>
         ))}
       </div>
 
-      <div className={`rounded-xl border p-3 ${fire && armed ? "border-emerald-400 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950" : "border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"}`}>
+      <div className={`rounded-2xl border p-4
+        ${fire && armed 
+          ? "border-cyan-300 bg-cyan-50 shadow-[6px_6px_14px_#a5f3fc,-6px_-6px_14px_#ffffff] dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:shadow-none dark:backdrop-blur-xl" 
+          : "border-slate-200 bg-white shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none dark:backdrop-blur-xl"}`}>
         {!active ? (
-          <p className="py-6 text-center text-sm text-slate-500 dark:text-zinc-400">Collecting ticks from all volatility markets…</p>
+          <p className="py-6 text-center text-sm text-slate-500 dark:text-white/50">Collecting ticks from all volatility markets…</p>
         ) : (
           <>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-zinc-400">{focus ? "Locked market" : "Best market right now"}</p>
-                <p className="text-lg font-bold">{marketLabel(active.market)} · {active.label}</p>
-                <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40">{focus ? "Locked market" : "Best market right now"}</p>
+                <p className="text-lg font-bold text-slate-800 dark:text-white">{marketLabel(active.market)} · {active.label}</p>
+                <p className="text-[11px] text-slate-500 dark:text-white/50">
                   hit {pct(active.observed)} ({active.hits}/{active.samples}) · need {pct(active.breakeven)} · payout {active.payout.toFixed(2)}x · streak {active.streak}
                 </p>
               </div>
               <div className="text-right">
-                <p className={`text-2xl font-black tabular-nums ${active.edge > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                <p className={`text-2xl font-black tabular-nums ${active.edge > 0 ? "text-cyan-600 dark:text-cyan-400" : "text-rose-600 dark:text-rose-400"}`}>
                   {active.edge > 0 ? "+" : ""}{(active.edge * 100).toFixed(1)}%
                 </p>
-                <p className="text-[10px] uppercase text-slate-500 dark:text-zinc-400">expected edge</p>
+                <p className="text-[10px] uppercase text-slate-500 dark:text-white/40">expected edge</p>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-100 p-2 dark:bg-zinc-900">
+            <div className="mt-3 flex items-center gap-3 rounded-xl p-2 bg-slate-100 shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff] dark:bg-white/5 dark:shadow-none">
               {armed ? (
                 fire ? (
-                  <span className="animate-pulse text-sm font-black text-emerald-600 dark:text-emerald-400">▶ RUN THE ROBOT NOW — {active.label} on {marketLabel(active.market)}</span>
+                  <span className="animate-pulse text-sm font-black text-cyan-600 dark:text-cyan-400">▶ RUN THE ROBOT NOW — {active.label} on {marketLabel(active.market)}</span>
                 ) : (
                   <>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-base font-black tabular-nums text-white">{count}</span>
-                    <span className="text-xs text-slate-500 dark:text-zinc-400">
-                      Get ready — run <b className="text-slate-900 dark:text-white">{active.label}</b> on <b className="text-slate-900 dark:text-white">{marketLabel(active.market)}</b> in {count}s
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-base font-black tabular-nums text-white shadow-[2px_2px_6px_#0891b2]">{count}</span>
+                    <span className="text-xs text-slate-500 dark:text-white/50">
+                      Get ready — run <b className="text-slate-800 dark:text-white">{active.label}</b> on <b className="text-slate-800 dark:text-white">{marketLabel(active.market)}</b> in {count}s
                     </span>
                   </>
                 )
               ) : (
-                <span className="text-xs text-slate-500 dark:text-zinc-400">No confident edge on this family yet — waiting for a setup. Do not trade.</span>
+                <span className="text-xs text-slate-500 dark:text-white/50">No confident edge on this family yet — waiting for a setup. Do not trade.</span>
               )}
             </div>
 
-            <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-zinc-400">{entryAdvice(active)}</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-white/50">{entryAdvice(active)}</p>
             {armedCfg && (
-              <p className="mt-3 rounded-lg bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+              <p className="mt-3 rounded-xl bg-cyan-50 px-3 py-2 text-[11px] font-semibold text-cyan-700 shadow-[inset_2px_2px_4px_#a5f3fc] dark:bg-cyan-500/10 dark:text-cyan-300 dark:shadow-none">
                 Robot armed · {armedCfg.contractKind}{armedCfg.barrier !== null ? ` ${armedCfg.barrier}` : ""} · stake {armedCfg.initialStake} — hit RUN on the dock when the countdown fires.
               </p>
             )}
-            <button disabled={!armed} onClick={() => setArmSignal(active)} className="mt-3 w-full rounded-lg bg-blue-600 py-2 text-xs font-bold text-white disabled:opacity-40">
+            <button disabled={!armed} onClick={() => setArmSignal(active)}
+              className="mt-3 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-xs font-bold text-white shadow-[4px_4px_10px_#0891b2,-2px_-2px_6px_#22d3ee] disabled:opacity-40 dark:shadow-none">
               Use this signal in the robot
             </button>
           </>
@@ -165,35 +169,37 @@ export default function AnalysisTool({ activeMarket = "volatility-10-1s", onUseS
       </div>
 
       <div>
-        <p className="mb-1 text-[11px] uppercase tracking-wider text-slate-500 dark:text-zinc-400">Last 30 ticks · {marketLabel(stripMarket)}</p>
+        <p className="mb-2 text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40">Last 30 ticks · {marketLabel(stripMarket)}</p>
         <div className="flex flex-wrap gap-1">{strip.map(renderCell)}</div>
       </div>
 
       <div>
-        <p className="mb-1 text-[11px] uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+        <p className="mb-2 text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40">
           All volatility markets · best {FAMILIES.find((f) => f.id === family)?.label} setup
         </p>
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[4px_4px_10px_#c8cdd6,-4px_-4px_10px_#ffffff] dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none dark:backdrop-blur-xl">
           {scan.ranked.map((s, i) => {
             const selected = focus === s.market || (!focus && i === 0);
             return (
-              <button key={s.market} onClick={() => setFocus(focus === s.market ? null : s.market)} className={`flex w-full items-center justify-between gap-2 border-b border-slate-200 px-2 py-2 text-left last:border-0 dark:border-zinc-800 ${selected ? "bg-blue-50 dark:bg-blue-950" : "hover:bg-slate-50 dark:hover:bg-zinc-900"}`}>
+              <button key={s.market} onClick={() => setFocus(focus === s.market ? null : s.market)}
+                className={`flex w-full items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 text-left last:border-0 dark:border-white/5
+                  ${selected ? "bg-cyan-50 dark:bg-cyan-500/10" : "hover:bg-slate-50 dark:hover:bg-white/5"}`}>
                 <span className="flex items-center gap-2">
                   <span className="w-4 text-[10px] text-slate-400">{i + 1}</span>
-                  <span className="text-xs font-semibold">{marketLabel(s.market)}</span>
-                  {s.market === activeMarket && <span className="rounded bg-slate-200 px-1 text-[9px] uppercase text-slate-700 dark:bg-zinc-800 dark:text-zinc-200">live</span>}
+                  <span className="text-xs font-semibold text-slate-800 dark:text-white">{marketLabel(s.market)}</span>
+                  {s.market === activeMarket && <span className="rounded bg-slate-200 px-1 text-[9px] uppercase text-slate-700 dark:bg-white/10 dark:text-white/70">live</span>}
                 </span>
                 <span className="flex items-center gap-3">
-                  <span className="text-xs font-medium">{s.label}</span>
-                  <span className="text-[11px] tabular-nums text-slate-500 dark:text-zinc-400">{pct(s.observed)}</span>
-                  <span className={`w-14 text-right text-xs font-bold tabular-nums ${s.edge > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  <span className="text-xs font-medium text-slate-700 dark:text-white/80">{s.label}</span>
+                  <span className="text-[11px] tabular-nums text-slate-500 dark:text-white/50">{pct(s.observed)}</span>
+                  <span className={`w-14 text-right text-xs font-bold tabular-nums ${s.edge > 0 ? "text-cyan-600 dark:text-cyan-400" : "text-rose-600 dark:text-rose-400"}`}>
                     {s.edge > 0 ? "+" : ""}{(s.edge * 100).toFixed(1)}%
                   </span>
                 </span>
               </button>
             );
           })}
-          {!scan.ranked.length && <p className="px-2 py-4 text-center text-xs text-slate-500 dark:text-zinc-400">Warming up…</p>}
+          {!scan.ranked.length && <p className="px-2 py-4 text-center text-xs text-slate-500 dark:text-white/50">Warming up…</p>}
         </div>
       </div>
 
@@ -202,11 +208,7 @@ export default function AnalysisTool({ activeMarket = "volatility-10-1s", onUseS
           signal={armSignal}
           marketLabel={marketLabel(armSignal.market)}
           onCancel={() => setArmSignal(null)}
-          onArm={(cfg, sig) => {
-            setArmedCfg(cfg);
-            setArmSignal(null);
-            onUseSignal?.(cfg, sig);
-          }}
+          onArm={(cfg, sig) => { setArmedCfg(cfg); setArmSignal(null); onUseSignal?.(cfg, sig); }}
         />
       )}
     </div>

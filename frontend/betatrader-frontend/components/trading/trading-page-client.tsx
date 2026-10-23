@@ -1,4 +1,3 @@
-// components/trading/trading-page-client.tsx
 "use client"
 
 import { useEffect, useState, useRef } from "react"
@@ -91,13 +90,9 @@ export default function TradingPageClient() {
   const showError = (message: string) => toast.error(message)
   const showTradeResult = (isWin: boolean, profit: number, amount: number, sessionProfit: number) => {
     if (isWin) {
-      toast.success(`WIN +$${formatCurrency(profit)}`, {
-        description: `Profit/Loss: $${formatCurrency(sessionProfit)}`,
-      })
+      toast.success(`WIN +$${formatCurrency(profit)}`, { description: `P/L: $${formatCurrency(sessionProfit)}` })
     } else {
-      toast(`LOSS -$${formatCurrency(Math.abs(profit))}`, {
-        description: `Profit/Loss: $${formatCurrency(sessionProfit)}`,
-      })
+      toast(`LOSS -$${formatCurrency(Math.abs(profit))}`, { description: `P/L: $${formatCurrency(sessionProfit)}` })
     }
   }
 
@@ -122,8 +117,7 @@ export default function TradingPageClient() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedAccountType = localStorage.getItem("account_type") || "standard"
-      setSelectedAccount(storedAccountType)
+      setSelectedAccount(localStorage.getItem("account_type") || "standard")
     }
   }, [])
 
@@ -135,7 +129,6 @@ export default function TradingPageClient() {
           api.getMarkets(),
           api.getUserRobots(),
         ])
-
         if (dashboardRes.error) throw new Error(dashboardRes.error as string)
         if (marketsRes.error) throw new Error(marketsRes.error as string)
         if (userRobotsRes.error) throw new Error(userRobotsRes.error as string)
@@ -145,22 +138,17 @@ export default function TradingPageClient() {
         setMarkets(marketsRes.data as Market[])
         setUserRobots(userRobotsRes.data as UserRobot[])
 
-        const accountObj = dashboard.accounts.find(
-          (acc) => acc.account_type === selectedAccount,
-        )
-        const accountBalance =
-          accountObj && accountObj.balance !== undefined ? Number(accountObj.balance) : 0
-
-        if (isNaN(accountBalance)) throw new Error("Invalid balance value from API")
+        const accountObj = dashboard.accounts.find((acc) => acc.account_type === selectedAccount)
+        const accountBalance = accountObj?.balance !== undefined ? Number(accountObj.balance) : 0
+        if (isNaN(accountBalance)) throw new Error("Invalid balance")
 
         setStartingBalance(accountBalance)
         setBalance(accountBalance)
         setSessionProfit(0)
         setIsSessionActive(dashboard.session_active)
       } catch (err) {
-        const errorMessage = (err as Error).message
-        setError(errorMessage)
-        showError(`Failed to load: ${errorMessage}`)
+        setError((err as Error).message)
+        showError(`Failed to load: ${(err as Error).message}`)
       } finally {
         setLoading(false)
       }
@@ -170,14 +158,9 @@ export default function TradingPageClient() {
 
   const handleRobotSelect = (robotId: number | null) => {
     setSelectedRobot(robotId)
-
     if (robotId) {
       const ur = userRobots.find((r) => r.robot.id === robotId)
-
-      const shouldBeElite =
-        !!ur?.robot?.is_elite_robot &&
-        (!!ur?.is_setting || !ur?.is_used)
-
+      const shouldBeElite = !!ur?.robot?.is_elite_robot && (!!ur?.is_setting || !ur?.is_used)
       if (shouldBeElite) {
         setIsEliteMode(true)
         setTradingMode("robot")
@@ -209,34 +192,17 @@ export default function TradingPageClient() {
     setExecutingTrades((prev) => [...prev, newTrade])
     setShowExecutionModal(true)
     setIsAutoTrading(true)
-
     if (!hasShownStartToast.current) {
       hasShownStartToast.current = true
       toast(`Trading started - $${formatCurrency(tradeParams.amount)} stake`)
     }
   }
 
-  const handleTradeExecutionComplete = (
-    tradeId: string,
-    profit: number,
-    isWin: boolean,
-    amount: number,
-    entrySpot?: number,
-    exitSpot?: number,
-    currentSpot?: number,
-  ) => {
-    setExecutingTrades((prev) =>
-      prev.map((t) =>
-        t.id === tradeId
-          ? { ...t, status: "completed", profit, isWin, entrySpot, exitSpot, currentSpot }
-          : t,
-      ),
-    )
-
+  const handleTradeExecutionComplete = (tradeId: string, profit: number, isWin: boolean, amount: number, entrySpot?: number, exitSpot?: number, currentSpot?: number) => {
+    setExecutingTrades((prev) => prev.map((t) => t.id === tradeId ? { ...t, status: "completed", profit, isWin, entrySpot, exitSpot, currentSpot } : t))
     const newSessionProfit = sessionProfit + profit
     setSessionProfit(newSessionProfit)
     setBalance(startingBalance + newSessionProfit)
-
     showTradeResult(isWin, profit, amount, newSessionProfit)
   }
 
@@ -247,12 +213,14 @@ export default function TradingPageClient() {
     toast.success("Trading stopped")
   }
 
+  const cardClass = "rounded-xl p-4 bg-white border border-slate-200 shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff] dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none dark:backdrop-blur-sm"
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-foreground text-sm sm:text-base">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4" />
-          <p>Loading trading platform...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-white/60">Loading trading platform...</p>
         </div>
       </div>
     )
@@ -260,15 +228,12 @@ export default function TradingPageClient() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-red-500 text-sm sm:text-base">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md p-6">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold mb-2 text-foreground">Loading Error</h2>
-          <p className="mb-6 text-muted-foreground">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-bold hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200"
-          >
+          <h2 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">Loading Error</h2>
+          <p className="mb-6 text-slate-500 dark:text-white/60">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold">
             Reload Page
           </button>
         </div>
@@ -279,84 +244,61 @@ export default function TradingPageClient() {
   const selectedEliteRobot = userRobots.find((r) => r.robot.id === selectedRobot)
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden">
       {/* Dark mode background */}
       <div className="fixed inset-0 z-0 dark:block hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl animate-float delay-1000" />
-        <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-purple-700/8 rounded-full blur-3xl animate-float delay-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-cyan-950/15 to-blue-950/10" />
+        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-cyan-600/6 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
       </div>
-
       {/* Light mode background */}
       <div className="fixed inset-0 z-0 block dark:hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-100 to-slate-50" />
       </div>
 
       <div className="relative z-10">
         <div className="flex min-h-screen">
           <div className="flex-1 overflow-auto ml-0 lg:ml-64">
             <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6 md:mb-8">
-                Trading Dashboard
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mb-6">Trading</h1>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                <div className="md:col-span-1 lg:col-span-2 xl:col-span-3 space-y-4 sm:space-y-6">
-                  {/* Balance cards — solid opaque */}
-                  <div className="rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4">
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Account Balance</p>
-                    <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 truncate">
-                      ${formatCurrency(balance)}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center justify-between">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 space-y-6">
+                  {/* Balance cards */}
+                  <div className={cardClass}>
+                    <p className="text-xs text-slate-500 dark:text-white/50 mb-1">Account Balance</p>
+                    <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">${formatCurrency(balance)}</p>
+                    <p className="text-xs text-slate-500 dark:text-white/50 mt-1 flex items-center justify-between">
                       <span>Session P/L:</span>
-                      <span
-                        className={`font-mono font-semibold px-2 py-1 rounded-full text-xs ${
-                          sessionProfit >= 0
-                            ? "bg-green-500/15 text-green-600 dark:text-green-400"
-                            : "bg-red-500/15 text-red-600 dark:text-red-400"
-                        }`}
-                      >
+                      <span className={`font-mono font-semibold px-2 py-1 rounded-full text-xs ${sessionProfit >= 0 ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400" : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400"}`}>
                         ${sessionProfit.toFixed(2)}
                       </span>
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4">
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Session Profit</p>
-                      <p
-                        className={`text-lg sm:text-xl font-bold truncate ${
-                          sessionProfit >= 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className={cardClass}>
+                      <p className="text-xs text-slate-500 dark:text-white/50 mb-1">Session Profit</p>
+                      <p className={`text-xl font-bold ${sessionProfit >= 0 ? "text-cyan-600 dark:text-cyan-400" : "text-rose-600 dark:text-rose-400"}`}>
                         ${sessionProfit.toFixed(2)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4">
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">Trading Mode</p>
-                      <p className="text-lg sm:text-xl font-bold text-pink-600 dark:text-pink-400 capitalize">
+                    <div className={cardClass}>
+                      <p className="text-xs text-slate-500 dark:text-white/50 mb-1">Trading Mode</p>
+                      <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400 capitalize">
                         {isEliteMode ? "Elite Robot" : tradingMode}
                       </p>
                     </div>
                   </div>
 
                   {/* Chart selector */}
-                  <div className="flex justify-end mb-2">
-                    <Select
-                      value={chartType}
-                      onValueChange={(value: "tradingview" | "analysis") => setChartType(value)}
-                    >
-                      <SelectTrigger className="w-[180px] bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-foreground">
+                  <div className="flex justify-end">
+                    <Select value={chartType} onValueChange={(value: "tradingview" | "analysis") => setChartType(value)}>
+                      <SelectTrigger className="w-[180px] bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] dark:shadow-none">
                         <SelectValue placeholder="Select Chart" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700">
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                         <SelectItem value="tradingview">Trading View</SelectItem>
                         <SelectItem value="analysis">Technical Analysis</SelectItem>
                       </SelectContent>
@@ -365,27 +307,18 @@ export default function TradingPageClient() {
 
                   <div className="w-full">
                     {chartType === "tradingview" ? (
-                      <TradingViewWidget
-                        symbol={
-                          selectedMarket
-                            ? mapToTradingViewSymbol(selectedMarket)
-                            : "NASDAQ:AAPL"
-                        }
-                      />
+                      <TradingViewWidget symbol={selectedMarket ? mapToTradingViewSymbol(selectedMarket) : "NASDAQ:AAPL"} />
                     ) : (
                       <MarketAnalysis market={selectedMarket} />
                     )}
                   </div>
 
                   {/* Mode selector */}
-                  <div className="w-full">
+                  <div className={cardClass}>
                     <TradingModeSelector
                       onModeChange={(mode) => {
                         setTradingMode(mode)
-                        if (mode === "manual") {
-                          setIsEliteMode(false)
-                          setSelectedRobot(null)
-                        }
+                        if (mode === "manual") { setIsEliteMode(false); setSelectedRobot(null) }
                       }}
                       selectedRobot={selectedRobot}
                       onRobotSelect={handleRobotSelect}
@@ -393,17 +326,13 @@ export default function TradingPageClient() {
                     />
                   </div>
 
-                  {/* Main trading area — solid opaque */}
-                  <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 sm:p-6">
+                  {/* Main trading area */}
+                  <div className={`${cardClass} p-6`}>
                     {isEliteMode && selectedEliteRobot ? (
                       <EliteRobotInterface
                         robotName={selectedEliteRobot.robot.name}
                         accountType={selectedAccount}
-                        onResetToNormal={() => {
-                          setIsEliteMode(false)
-                          setSelectedRobot(null)
-                          setTradingMode("manual")
-                        }}
+                        onResetToNormal={() => { setIsEliteMode(false); setSelectedRobot(null); setTradingMode("manual") }}
                       />
                     ) : (
                       <TradingInterface
@@ -423,34 +352,14 @@ export default function TradingPageClient() {
                 </div>
 
                 {/* Right column — Trade History */}
-                <div className="md:col-span-1 lg:col-span-1 xl:col-span-1">
-                  <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 lg:p-6 sticky top-20 overflow-y-auto">
-                    <h3 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4 uppercase tracking-wider">
-                      Recent Trades
-                    </h3>
+                <div className="lg:col-span-1">
+                  <div className={`${cardClass} sticky top-20 overflow-y-auto`}>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-4 uppercase tracking-wider">Recent Trades</h3>
                     <TradeHistory
-                      sessionTrades={executingTrades
-                        .filter((t) => t.status === "completed")
-                        .map((t) => ({
-                          id: t.id,
-                          market: t.market,
-                          direction: t.direction,
-                          amount: t.amount,
-                          status: t.status,
-                          is_win: !!t.isWin,
-                          profit: t.profit ?? 0,
-                          timeLeft: t.timeLeft,
-                          entrySpot: t.entrySpot,
-                          market_id: t.market_id,
-                          trade_type_id: t.trade_type_id,
-                          robot_id: t.robot_id,
-                          use_martingale: t.use_martingale,
-                          martingale_level: t.martingale_level,
-                          targetProfit: t.targetProfit,
-                          stopLoss: t.stopLoss,
-                          profit_multiplier: t.profit_multiplier,
-                          created_at: new Date().toISOString(),
-                        }))}
+                      sessionTrades={executingTrades.filter((t) => t.status === "completed").map((t) => ({
+                        id: t.id, market: t.market, direction: t.direction, amount: t.amount,
+                        is_win: !!t.isWin, profit: t.profit ?? 0, created_at: new Date().toISOString(),
+                      }))}
                     />
                   </div>
                 </div>

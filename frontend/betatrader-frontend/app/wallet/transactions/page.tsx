@@ -1,4 +1,3 @@
-// app/wallet/transactions/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,7 +22,6 @@ export default function TransactionsPage() {
       if (res.error) throw new Error(res.error);
 
       let data: WalletTransaction[] = [];
-
       if (!res.data) {
         data = [];
       } else if (Array.isArray(res.data)) {
@@ -68,58 +66,45 @@ export default function TransactionsPage() {
     filterTransactions(transactions, activeTab);
   }, [activeTab, transactions]);
 
-  const handleTransactionClick = (tx: WalletTransaction) => {
-    setSelectedTransaction(tx);
-  };
+  const handleTransactionClick = (tx: WalletTransaction) => setSelectedTransaction(tx);
 
   return (
     <div className="relative min-h-screen text-foreground overflow-hidden">
-      {/* ========== BACKGROUND (same as Dashboard) ========== */}
-      
-      {/* Dark mode */}
-      <div className="fixed inset-0 z-0 dark:block hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl animate-float delay-1000" />
-        <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-purple-700/8 rounded-full blur-3xl animate-float delay-500" />
+      {/* Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute top-1/4 -right-32 h-80 w-80 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/15" />
       </div>
 
-      {/* Light mode */}
-      <div className="fixed inset-0 z-0 block dark:hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
-      </div>
-
-      {/* Content */}
       <div className="relative z-10 pt-12 pb-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-full bg-card border border-border shadow flex items-center justify-center hover:bg-muted transition"
-            aria-label="Go back"
+            className="w-10 h-10 rounded-full flex items-center justify-center
+              bg-white border border-slate-200 shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff]
+              dark:bg-white/10 dark:border-white/10 dark:shadow-none
+              hover:bg-slate-50 dark:hover:bg-white/20 transition"
           >
-            <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-slate-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-foreground">Transactions</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Transactions</h1>
           <div className="w-10" />
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-muted rounded-full p-1 mb-8">
+        <div className="flex rounded-full p-1 mb-8
+          bg-slate-100 border border-slate-200 shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]
+          dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none">
           {(["all", "deposits", "withdrawals"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-3 px-6 rounded-full text-sm font-medium capitalize transition-all ${
                 activeTab === tab
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[3px_3px_8px_#0891b2] dark:shadow-none"
+                  : "text-slate-500 dark:text-white/50 hover:text-slate-800 dark:hover:text-white"
               }`}
             >
               {tab === "all" ? "All" : tab === "deposits" ? "Deposits" : "Withdrawals"}
@@ -127,46 +112,26 @@ export default function TransactionsPage() {
           ))}
         </div>
 
-        {/* Transaction List */}
-        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+        <div className="rounded-2xl overflow-hidden
+          bg-white border border-slate-200 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff]
+          dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading transactions...
-            </div>
+            <div className="p-8 text-center text-slate-500 dark:text-white/50">Loading transactions...</div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              <p className="text-lg">
-                No {activeTab === "all" ? "" : activeTab} yet
-              </p>
+            <div className="p-12 text-center text-slate-500 dark:text-white/50">
+              <p className="text-lg">No {activeTab === "all" ? "" : activeTab} yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredTransactions.map((transaction) => (
                 <TransactionItem
                   key={transaction.id}
                   transaction={{
                     id: transaction.id,
-                    type:
-                      transaction.transaction_type.charAt(0).toUpperCase() +
-                      transaction.transaction_type.slice(1),
-                    amount: `${formatCurrency(transaction.amount)} ${
-                      transaction.currency?.code || "USD"
-                    }`,
-                    convertedAmount: transaction.converted_amount
-                      ? `${formatCurrency(transaction.converted_amount)} ${
-                          transaction.target_currency?.code || "USD"
-                        }`
-                      : undefined,
-                    date: new Date(transaction.created_at).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    ),
+                    type: transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1),
+                    amount: `${formatCurrency(transaction.amount)} ${transaction.currency?.code || "USD"}`,
+                    convertedAmount: transaction.converted_amount ? `${formatCurrency(transaction.converted_amount)} ${transaction.target_currency?.code || "USD"}` : undefined,
+                    date: new Date(transaction.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
                     transactionType: transaction.transaction_type,
                     exchangeRateUsed: transaction.exchange_rate_used,
                     status: transaction.status,
@@ -183,12 +148,8 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Detail Modal */}
       {selectedTransaction && (
-        <TransactionDetailModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <TransactionDetailModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
       )}
     </div>
   );

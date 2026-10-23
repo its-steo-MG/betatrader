@@ -90,7 +90,7 @@ export default function BecomeTraderPage() {
               >
                 Submit Another
               </Button>
-              <Button className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700">
+              <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
                 Go to Dashboard
               </Button>
             </div>
@@ -104,12 +104,12 @@ export default function BecomeTraderPage() {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
       {/* Header */}
       <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 dark:bg-pink-950 border border-pink-500/20 text-pink-600 dark:text-pink-400 text-sm font-medium">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 text-sm font-medium">
           <Trophy size={16} />
           <span>Become a Signal Provider</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          Share Your <span className="text-pink-600 dark:text-pink-400">Trading Expertise</span>
+          Share Your <span className="text-cyan-600 dark:text-cyan-400">Trading Expertise</span>
         </h1>
         <p className="text-lg text-slate-500 dark:text-zinc-400 leading-relaxed max-w-2xl">
           Turn your trading skills into passive income. Allow others to copy your trades and earn performance fees on
@@ -119,10 +119,10 @@ export default function BecomeTraderPage() {
 
       {/* Benefits Grid */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card className="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+        <Card className="bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl">
           <CardContent className="p-4 sm:p-6 space-y-3">
-            <div className="w-12 h-12 bg-pink-100 dark:bg-pink-950 rounded-xl flex items-center justify-center">
-              <DollarSign size={24} className="text-pink-600 dark:text-pink-400" />
+            <div className="w-12 h-12 bg-cyan-100 dark:bg-cyan-500/20 rounded-xl flex items-center justify-center">
+              <DollarSign size={24} className="text-cyan-600 dark:text-cyan-400" />
             </div>
             <h3 className="font-bold text-lg">Earn Performance Fees</h3>
             <p className="text-sm text-slate-500 dark:text-zinc-400">
@@ -131,7 +131,7 @@ export default function BecomeTraderPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+        <Card className="bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl">
           <CardContent className="p-4 sm:p-6 space-y-3">
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-950 rounded-xl flex items-center justify-center">
               <Users size={24} className="text-blue-600 dark:text-blue-400" />
@@ -143,7 +143,7 @@ export default function BecomeTraderPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+        <Card className="bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl">
           <CardContent className="p-4 sm:p-6 space-y-3">
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 rounded-xl flex items-center justify-center">
               <Zap size={24} className="text-emerald-600 dark:text-emerald-400" />
@@ -164,7 +164,7 @@ export default function BecomeTraderPage() {
       </Alert>
 
       {/* Application Form */}
-      <Card className="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+      <Card className="bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="text-2xl">Application Form</CardTitle>
           <CardDescription className="text-slate-500 dark:text-zinc-400">
@@ -183,7 +183,7 @@ export default function BecomeTraderPage() {
                 placeholder="Describe your trading strategy, experience, and approach to risk management..."
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                className="min-h-[120px] bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50 resize-none"
+                className="min-h-[120px] bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-cyan-500/50 resize-none"
                 required
               />
               <p className="text-xs text-slate-400 dark:text-zinc-500">This will be shown to potential subscribers</p>
@@ -198,7 +198,7 @@ export default function BecomeTraderPage() {
                 value={formData.risk_level}
                 onValueChange={(val) => setFormData({ ...formData, risk_level: val })}
               >
-                <SelectTrigger id="risk_level" className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50">
+                <SelectTrigger id="risk_level" className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-cyan-500/50">
                   <SelectValue placeholder="Select your strategy risk level" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-950 border-slate-200 dark:border-zinc-700 text-white">
@@ -247,7 +247,7 @@ export default function BecomeTraderPage() {
                     value={formData.min_allocation}
                     onChange={(e) => setFormData({ ...formData, min_allocation: e.target.value })}
                     placeholder="10"
-                    className="pl-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50"
+                    className="pl-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-cyan-500/50"
                     required
                   />
                 </div>
@@ -269,7 +269,7 @@ export default function BecomeTraderPage() {
                     value={formData.max_allocation}
                     onChange={(e) => setFormData({ ...formData, max_allocation: e.target.value })}
                     placeholder="1000"
-                    className="pl-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50"
+                    className="pl-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-cyan-500/50"
                     required
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function BecomeTraderPage() {
                   value={formData.performance_fee}
                   onChange={(e) => setFormData({ ...formData, performance_fee: e.target.value })}
                   placeholder="20"
-                  className="pr-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50"
+                  className="pr-8 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-cyan-500/50"
                   required
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">%</span>
@@ -313,7 +313,7 @@ export default function BecomeTraderPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 font-semibold"
+              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 font-semibold"
             >
               {isSubmitting ? (
                 <>
@@ -332,13 +332,13 @@ export default function BecomeTraderPage() {
       </Card>
 
       {/* Expected Timeline */}
-      <Card className="bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+      <Card className="bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl">
         <CardContent className="p-4 sm:p-6">
           <h3 className="font-bold text-lg mb-4">What Happens Next?</h3>
           <div className="space-y-4">
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-950 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-pink-600 dark:text-pink-400">1</span>
+              <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">1</span>
               </div>
               <div>
                 <h4 className="font-semibold">Application Review</h4>
@@ -348,8 +348,8 @@ export default function BecomeTraderPage() {
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-950 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-pink-600 dark:text-pink-400">2</span>
+              <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">2</span>
               </div>
               <div>
                 <h4 className="font-semibold">Approval & Activation</h4>
@@ -359,8 +359,8 @@ export default function BecomeTraderPage() {
               </div>
             </div>
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-950 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-pink-600 dark:text-pink-400">3</span>
+              <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">3</span>
               </div>
               <div>
                 <h4 className="font-semibold">Start Earning</h4>

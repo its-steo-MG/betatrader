@@ -9,10 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { getAccountData } from "@/lib/api-helpers"
 
-interface UserData { username: string; email: string; phone?: string }
-
-const card = "bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800"
-const field = "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white mt-2"
+const card = "bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl"
+const field = "bg-white dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white mt-2 shadow-[inset_2px_2px_4px_#e2e8f0] dark:shadow-none"
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true)
@@ -41,7 +39,7 @@ export default function AccountSettings() {
 
   if (loading) {
     return (
-      <Card className={card}><CardContent className="pt-6"><div className="h-40 bg-slate-100 dark:bg-zinc-800 rounded-lg animate-pulse" /></CardContent></Card>
+      <Card className={card}><CardContent className="pt-6"><div className="h-40 bg-slate-100 dark:bg-white/10 rounded-lg animate-pulse" /></CardContent></Card>
     )
   }
 
@@ -49,7 +47,7 @@ export default function AccountSettings() {
     <div className="space-y-6">
       <Card className={card}>
         <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
+          <CardTitle className="text-slate-800 dark:text-white">Personal Information</CardTitle>
           <CardDescription>Update your profile details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -67,13 +65,13 @@ export default function AccountSettings() {
             <Label htmlFor="phone">Phone Number</Label>
             <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={field} />
           </div>
-          <Button onClick={handleSave} className="bg-pink-600 hover:bg-pink-700 text-white">Save Changes</Button>
+          <Button onClick={handleSave} className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">Save Changes</Button>
         </CardContent>
       </Card>
 
       <Card className={card}>
         <CardHeader>
-          <CardTitle>Trading Preferences</CardTitle>
+          <CardTitle className="text-slate-800 dark:text-white">Trading Preferences</CardTitle>
           <CardDescription>Customize your trading experience</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -81,7 +79,7 @@ export default function AccountSettings() {
             <Label>Base Currency</Label>
             <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
               <SelectTrigger className={field}><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700">
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10">
                 <SelectItem value="usd">USD - US Dollar</SelectItem>
                 <SelectItem value="eur">EUR - Euro</SelectItem>
                 <SelectItem value="gbp">GBP - British Pound</SelectItem>
@@ -92,7 +90,7 @@ export default function AccountSettings() {
             <Label>Default Leverage</Label>
             <Select value={formData.leverage} onValueChange={(value) => setFormData({ ...formData, leverage: value })}>
               <SelectTrigger className={field}><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700">
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10">
                 <SelectItem value="1:50">1:50</SelectItem>
                 <SelectItem value="1:100">1:100</SelectItem>
                 <SelectItem value="1:200">1:200</SelectItem>
@@ -108,7 +106,7 @@ export default function AccountSettings() {
             <Label>Price Alerts</Label>
             <Switch checked={formData.alerts} onCheckedChange={(checked) => setFormData({ ...formData, alerts: checked })} />
           </div>
-          <Button onClick={handleSave} className="bg-pink-600 hover:bg-pink-700 text-white">Save Preferences</Button>
+          <Button onClick={handleSave} className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">Save Preferences</Button>
         </CardContent>
       </Card>
     </div>

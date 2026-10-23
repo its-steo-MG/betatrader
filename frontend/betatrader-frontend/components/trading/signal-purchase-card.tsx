@@ -24,11 +24,7 @@ export default function SignalPurchaseCard({
 
     setIsLoading(true)
     try {
-      const accountType = localStorage.getItem("login_type") as
-        | "demo"
-        | "standard"
-        | undefined
-
+      const accountType = localStorage.getItem("login_type") as "demo" | "standard" | undefined
       const response = await api.purchaseRobot(aiBotId, accountType || "standard")
 
       if (response.error) {
@@ -47,87 +43,57 @@ export default function SignalPurchaseCard({
   }
 
   if (!aiBotId) {
-    return (
-      <div className="text-red-500 dark:text-red-400">
-        Error: AI Signal Bot not configured
-      </div>
-    )
+    return <div className="text-rose-500 dark:text-rose-400">Error: AI Signal Bot not configured</div>
   }
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-green-500/30 rounded-xl p-8 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl p-8
+        bg-white border border-slate-200
+        shadow-[10px_10px_20px_#b8bdc6,-10px_-10px_20px_#ffffff]
+        dark:bg-white/[0.07] dark:border-white/20 dark:shadow-none dark:backdrop-blur-[32px] dark:saturate-150
+        dark:liquid-glass">
+        
         {/* Locked Icon */}
-        <div className="text-center mb-6">
-          <div className="inline-block bg-green-100 dark:bg-green-500/20 border border-green-300 dark:border-green-500/50 rounded-full p-6 mb-4">
-            <svg
-              className="w-12 h-12 text-green-600 dark:text-green-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
+        <div className="text-center mb-6 relative z-[1]">
+          <div className="inline-block bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-300 dark:border-cyan-500/50 rounded-full p-6 mb-4">
+            <svg className="w-12 h-12 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
         </div>
 
-        {/* Title */}
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
+        <h3 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-2 relative z-[1]">
           AI Signal Bot
         </h3>
 
-        {/* Description */}
-        <p className="text-slate-500 dark:text-zinc-400 text-center mb-6 text-sm leading-relaxed">
+        <p className="text-slate-500 dark:text-white/60 text-center mb-6 text-sm leading-relaxed relative z-[1]">
           Real-time AI-powered market signals for forex & crypto. Scans all markets
           and delivers high-probability entries with Take Profit & Stop Loss.
         </p>
 
-        {/* Price */}
-        <div className="text-center mb-8">
-          <div className="text-4xl font-bold text-green-600 dark:text-green-500 mb-2">
-            $200
-          </div>
-          <p className="text-slate-500 dark:text-zinc-400 text-sm">
-            One-time activation
-          </p>
+        <div className="text-center mb-8 relative z-[1]">
+          <div className="text-4xl font-bold text-cyan-600 dark:text-cyan-400 mb-2">$200</div>
+          <p className="text-slate-500 dark:text-white/50 text-sm">One-time activation</p>
         </div>
 
-        {/* Activate Button */}
         <Button
           onClick={handleActivate}
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+          className="drop-on-top relative w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+            text-white font-bold py-3 rounded-xl transition-all overflow-hidden
+            shadow-[6px_6px_12px_#0891b2,-4px_-4px_10px_#22d3ee] dark:shadow-none"
         >
-          {isLoading ? "Processing..." : "Activate for $200"}
+          <span className="relative z-[1]">{isLoading ? "Processing..." : "Activate for $200"}</span>
         </Button>
 
-        {/* Features */}
-        <div className="mt-8 space-y-3">
-          <p className="text-slate-500 dark:text-zinc-400 text-xs font-semibold uppercase">
-            Features
-          </p>
-          <ul className="space-y-2 text-sm text-slate-700 dark:text-zinc-300">
-            <li className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-500">✓</span> Global
-              Market Scanning
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-500">✓</span> RSI & ATR
-              Analysis
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-500">✓</span>{" "}
-              High-Probability Signals
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-500">✓</span> Automatic
-              TP/SL
-            </li>
+        <div className="mt-8 space-y-3 relative z-[1]">
+          <p className="text-slate-500 dark:text-white/50 text-xs font-semibold uppercase">Features</p>
+          <ul className="space-y-2 text-sm text-slate-700 dark:text-white/80">
+            <li className="flex items-center gap-2"><span className="text-cyan-500">✓</span> Global Market Scanning</li>
+            <li className="flex items-center gap-2"><span className="text-cyan-500">✓</span> RSI & ATR Analysis</li>
+            <li className="flex items-center gap-2"><span className="text-cyan-500">✓</span> High-Probability Signals</li>
+            <li className="flex items-center gap-2"><span className="text-cyan-500">✓</span> Automatic TP/SL</li>
           </ul>
         </div>
       </div>

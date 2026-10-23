@@ -53,9 +53,7 @@ export default function CopyTradingLayout({ children }: { children: React.ReactN
           normalizedUser.accounts[0];
         if (!account) throw new Error("No valid account found");
         setActiveAccount(account);
-        setLoginType(
-          account.account_type === "demo" || account.account_type === "mt5-demo" ? "demo" : "real"
-        );
+        setLoginType(account.account_type === "demo" || account.account_type === "mt5-demo" ? "demo" : "real");
       } catch {
         setError("Failed to load session. Please log in again.");
         toast.error("Failed to load session. Please log in again.");
@@ -76,15 +74,11 @@ export default function CopyTradingLayout({ children }: { children: React.ReactN
     localStorage.setItem("login_type", account.account_type === "demo" ? "demo" : "real");
     const updatedUser: User = {
       ...user,
-      accounts: user.accounts.map((a) =>
-        String(a.id) === String(account.id) ? { ...a, balance: Number(account.balance) || 0 } : a
-      ),
+      accounts: user.accounts.map((a) => String(a.id) === String(account.id) ? { ...a, balance: Number(account.balance) || 0 } : a),
     };
     setUser(updatedUser);
     setActiveAccount(account);
-    setLoginType(
-      account.account_type === "demo" || account.account_type === "mt5-demo" ? "demo" : "real"
-    );
+    setLoginType(account.account_type === "demo" || account.account_type === "mt5-demo" ? "demo" : "real");
     localStorage.setItem("user_session", JSON.stringify(updatedUser));
     window.dispatchEvent(new Event("session-updated"));
   };
@@ -99,28 +93,23 @@ export default function CopyTradingLayout({ children }: { children: React.ReactN
       ? (user?.accounts || []).filter((a) => a.account_type !== "demo" && a.account_type !== "mt5-demo")
       : (user?.accounts || []).filter((a) => a.account_type === "demo" || a.account_type === "mt5-demo");
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Loading...</div>
-    );
-  }
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center bg-background text-red-500">{error}</div>;
-  }
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="text-cyan-500 animate-pulse">Loading...</div>
+    </div>
+  );
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-rose-500">{error}</div>
+  );
 
   return (
     <div className="relative flex min-h-screen flex-col text-foreground">
-      <div className="fixed inset-0 z-0 hidden dark:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-purple-700/8 rounded-full blur-3xl" />
-      </div>
-      <div className="fixed inset-0 z-0 block dark:hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
+      {/* Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute top-1/4 -right-32 h-80 w-80 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/15" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-teal-300/10 blur-3xl dark:bg-teal-500/10" />
       </div>
 
       <div className="relative z-10 flex min-h-screen w-full flex-col">
@@ -135,12 +124,7 @@ export default function CopyTradingLayout({ children }: { children: React.ReactN
           onLogout={handleLogout}
         />
         <div className="flex flex-1 w-full">
-          <Sidebar
-            loginType={loginType}
-            activeAccount={activeAccount}
-            accounts={availableAccounts}
-            onSwitchAccount={handleSwitchAccount}
-          />
+          <Sidebar loginType={loginType} activeAccount={activeAccount} accounts={availableAccounts} onSwitchAccount={handleSwitchAccount} />
           <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-x-hidden">
             <div className="w-full max-w-7xl mx-auto space-y-6 md:space-y-8">{children}</div>
           </main>

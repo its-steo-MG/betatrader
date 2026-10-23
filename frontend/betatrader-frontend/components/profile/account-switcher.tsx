@@ -10,7 +10,7 @@ import { getAccountData, switchAccountHelper } from "@/lib/api-helpers"
 interface Account { id: number; account_type: string; balance: number }
 interface RawAccount { id: number; account_type: string; balance?: string | number | null }
 
-const card = "bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800"
+const card = "bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl"
 
 export default function AccountSwitcher() {
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -45,7 +45,7 @@ export default function AccountSwitcher() {
     return (
       <Card className={`${card} sticky top-8`}>
         <CardHeader><CardTitle className="text-lg">Your Accounts</CardTitle></CardHeader>
-        <CardContent><div className="h-20 bg-slate-100 dark:bg-zinc-800 rounded-lg animate-pulse" /></CardContent>
+        <CardContent><div className="h-20 bg-slate-100 dark:bg-white/10 rounded-lg animate-pulse" /></CardContent>
       </Card>
     )
   }
@@ -53,7 +53,7 @@ export default function AccountSwitcher() {
   return (
     <Card className={`${card} sticky top-8`}>
       <CardHeader>
-        <CardTitle className="text-lg">Your Accounts</CardTitle>
+        <CardTitle className="text-lg text-slate-800 dark:text-white">Your Accounts</CardTitle>
         <CardDescription>Switch between trading accounts</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -62,23 +62,23 @@ export default function AccountSwitcher() {
             key={account.id}
             onClick={() => handleSwitch(account.id)}
             disabled={switching}
-            className={`w-full p-3 rounded-lg border-2 text-left transition-all disabled:opacity-50 ${
+            className={`w-full p-3 rounded-xl border-2 text-left transition-all disabled:opacity-50 ${
               activeId === account.id
-                ? "border-pink-500 bg-pink-50 dark:bg-pink-950"
-                : "border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-500/20"
+                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold capitalize">{account.account_type}</span>
-              {activeId === account.id && <Badge className="bg-pink-600 text-white">Active</Badge>}
+              <span className="font-semibold capitalize text-slate-800 dark:text-white">{account.account_type}</span>
+              {activeId === account.id && <Badge className="bg-cyan-600 text-white">Active</Badge>}
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-zinc-400">
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/50">
               <Wallet className="w-4 h-4" />
               <span>${account.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
             </div>
           </button>
         ))}
-        <Button className="w-full mt-4 bg-pink-600 hover:bg-pink-700 text-white">
+        <Button className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-none">
           <Plus className="w-4 h-4 mr-2" /> Create Account
         </Button>
       </CardContent>

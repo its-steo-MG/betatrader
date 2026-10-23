@@ -121,7 +121,7 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
           max-h-[92dvh] sm:max-h-[90dvh]
           p-0 gap-0 overflow-hidden
           flex flex-col
-          bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white
+          bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 text-slate-900 dark:text-white
           rounded-2xl
         "
       >
@@ -136,7 +136,7 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
             <div className="space-y-5 sm:space-y-6 min-w-0">
               {/* Profile Header */}
               <div className="flex flex-col sm:flex-row items-start gap-4">
-                <div className="relative p-1 rounded-full bg-gradient-to-br from-pink-500 to-blue-500 flex-shrink-0">
+                <div className="relative p-1 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex-shrink-0">
                   <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-white dark:border-zinc-950">
                     <AvatarImage src={`/.jpg?height=80&width=80&query=${displayName}`} />
                     <AvatarFallback className="bg-slate-200 text-slate-900 dark:bg-zinc-800 dark:text-white font-bold text-lg sm:text-xl">
@@ -158,42 +158,42 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
 
               {/* Key Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
-                  <div className="flex items-center gap-2 text-pink-600 dark:text-pink-400">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                  <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
                     <TrendingUp size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Win Rate</span>
                   </div>
                   <p className="text-xl sm:text-2xl font-bold">{winRate.toFixed(1)}%</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                     <Shield size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Avg Return</span>
                   </div>
                   <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">+{avgReturn.toFixed(1)}%</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                     <Users size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Subscribers</span>
                   </div>
                   <p className="text-xl sm:text-2xl font-bold">{subCount}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                     <Clock size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Min Alloc</span>
                   </div>
                   <p className="text-xl sm:text-2xl font-bold">${minAlloc}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
                     <Calendar size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Max Alloc</span>
                   </div>
                   <p className="text-xl sm:text-2xl font-bold">${maxAlloc}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 sm:p-4 space-y-1.5 sm:space-y-2 min-w-0">
                   <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                     <Shield size={16} className="flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold truncate">Fee</span>
@@ -203,16 +203,16 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
               </div>
 
               {/* Equity Growth Chart */}
-              <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 sm:p-6 space-y-4">
+              <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-6 space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                  <TrendingUp size={18} className="text-pink-500" />
+                  <TrendingUp size={18} className="text-cyan-500" />
                   Equity Growth
                 </h3>
                 <div className="h-32 sm:h-40 lg:h-48 flex items-end gap-[2px] sm:gap-1">
                   {Array.from({ length: 50 }).map((_, i) => (
                     <div
                       key={i}
-                      className="flex-1 bg-gradient-to-t from-pink-500/30 to-pink-500/70 rounded-t-sm"
+                      className="flex-1 bg-gradient-to-t from-cyan-500/30 to-cyan-500/70 rounded-t-sm"
                       style={{ height: `${30 + Math.sin(i / 5) * 30 + Math.random() * 20}%` }}
                     />
                   ))}
@@ -222,9 +222,9 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
 
             {/* Right Column: Start Copying Form (sticky only on large screens) */}
             <div className="min-w-0">
-              <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 sm:p-6 space-y-5 sm:space-y-6 lg:sticky lg:top-0">
+              <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-6 space-y-5 sm:space-y-6 lg:sticky lg:top-0">
                 <div className="space-y-2">
-                  <h3 className="text-lg sm:text-xl font-bold text-gradient-pink">Start Copying</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400">Start Copying</h3>
                   <p className="text-sm text-slate-500 dark:text-zinc-400">
                     Set your parameters and automatically mirror this trader&apos;s signals
                   </p>
@@ -245,7 +245,7 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
                       max={maxAlloc}
                       value={allocation}
                       onChange={(e) => setAllocation(Number(e.target.value))}
-                      className="pl-8 h-11 text-base bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 focus:ring-pink-500/50"
+                      className="pl-8 h-11 text-base bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/10 focus:ring-cyan-500/50"
                     />
                   </div>
                   <p className="text-xs text-slate-400 dark:text-zinc-500">
@@ -259,7 +259,7 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
                     <Label htmlFor="drawdown" className="text-slate-600 dark:text-zinc-300">
                       Max Drawdown
                     </Label>
-                    <span className="text-sm font-bold text-pink-600 dark:text-pink-400">{maxDrawdown[0]}%</span>
+                    <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">{maxDrawdown[0]}%</span>
                   </div>
                   <Slider
                     id="drawdown"
@@ -268,13 +268,13 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
                     min={5}
                     max={50}
                     step={5}
-                    className="[&_[role=slider]]:bg-pink-500 [&_[role=slider]]:border-pink-600"
+                    className="[&_[role=slider]]:bg-cyan-500 [&_[role=slider]]:border-cyan-600"
                   />
                   <p className="text-xs text-slate-400 dark:text-zinc-500">Auto-pause if losses exceed this threshold</p>
                 </div>
 
                 {/* Performance Fee Notice */}
-                <Alert className="bg-pink-50 dark:bg-pink-950 border-pink-300 dark:border-pink-700">
+                <Alert className="bg-cyan-50 dark:bg-cyan-500/10 border-cyan-300 dark:border-cyan-500/30">
                   <AlertDescription className="text-xs text-slate-500 dark:text-zinc-400">
                     This trader charges a <strong>{perfFee}%</strong> performance fee on profits. Fees are deducted
                     automatically from winning trades.
@@ -284,7 +284,7 @@ export function TraderDetailDialog({ trader, open, onOpenChange }: TraderDetailD
                 {/* CTA Button */}
                 <Button
                   onClick={handleStartCopying}
-                  className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 h-12 font-semibold text-base"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 h-12 font-semibold text-base"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Start Copying Now"}

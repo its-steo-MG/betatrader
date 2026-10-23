@@ -63,11 +63,7 @@ export function TradingInterface({
     const fetchTradeTypes = async () => {
       const { data, error } = await api.getTradeTypes()
       if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load trade types",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: "Failed to load trade types", variant: "destructive" })
       } else {
         setTradeTypes(data as TradeType[])
       }
@@ -86,8 +82,7 @@ export function TradingInterface({
   }
 
   const selectedTradeTypeName = tradeTypes.find((t) => t.id === selectedTradeType)?.name
-  const { primary: primaryLabel, secondary: secondaryLabel } =
-    getDirectionLabels(selectedTradeTypeName)
+  const { primary: primaryLabel, secondary: secondaryLabel } = getDirectionLabels(selectedTradeTypeName)
 
   useEffect(() => {
     setDirection(primaryLabel.toLowerCase())
@@ -97,19 +92,11 @@ export function TradingInterface({
     setIsLoading(true)
     try {
       const marketObj = markets.find((m) => m.name === selectedMarket)
-      if (!marketObj || !selectedTradeType || !amount) {
-        throw new Error("Missing required fields")
-      }
+      if (!marketObj || !selectedTradeType || !amount) throw new Error("Missing required fields")
       const amountNum = Number.parseFloat(amount)
-      if (isNaN(amountNum)) {
-        throw new Error("Invalid amount")
-      }
-      if (amountNum < 0.5) {
-        throw new Error("Minimum trade amount is 0.5 USD")
-      }
-      if (amountNum > balance) {
-        throw new Error("Insufficient balance")
-      }
+      if (isNaN(amountNum)) throw new Error("Invalid amount")
+      if (amountNum < 0.5) throw new Error("Minimum trade amount is 0.5 USD")
+      if (amountNum > balance) throw new Error("Insufficient balance")
 
       const params = {
         market_id: marketObj.id,
@@ -124,39 +111,28 @@ export function TradingInterface({
       }
 
       onStartTrading?.({ ...params, profit: 0 })
-
-      toast({
-        title: "Trade submitted",
-        description: `Processing $${formatCurrency(amountNum)} stake...`,
-        variant: "default",
-      })
+      toast({ title: "Trade submitted", description: `Processing $${formatCurrency(amountNum)} stake...` })
     } catch (err) {
-      toast({
-        title: "Error",
-        description: (err as Error).message,
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: (err as Error).message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
   }
 
+  const inputClass = "w-full bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 h-11 rounded-xl shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff] dark:shadow-none"
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Market */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Market
-        </label>
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Market</label>
         <Select onValueChange={onMarketSelect} value={selectedMarket || ""}>
-          <SelectTrigger className="w-full bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white h-10">
+          <SelectTrigger className={inputClass}>
             <SelectValue placeholder="Select market" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg">
+          <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             {markets.map((market) => (
-              <SelectItem key={market.id} value={market.name}>
-                {market.name}
-              </SelectItem>
+              <SelectItem key={market.id} value={market.name}>{market.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -164,21 +140,14 @@ export function TradingInterface({
 
       {/* Trade Type */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Trade Type
-        </label>
-        <Select
-          onValueChange={(value) => setSelectedTradeType(Number(value))}
-          value={selectedTradeType?.toString() || ""}
-        >
-          <SelectTrigger className="w-full bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white h-10">
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Trade Type</label>
+        <Select onValueChange={(value) => setSelectedTradeType(Number(value))} value={selectedTradeType?.toString() || ""}>
+          <SelectTrigger className={inputClass}>
             <SelectValue placeholder="Select trade type" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg">
+          <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             {tradeTypes.map((type) => (
-              <SelectItem key={type.id} value={type.id.toString()}>
-                {type.name}
-              </SelectItem>
+              <SelectItem key={type.id} value={type.id.toString()}>{type.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -186,106 +155,71 @@ export function TradingInterface({
 
       {/* Direction */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Direction
-        </label>
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Direction</label>
         <div className="flex gap-3">
           <button
             onClick={() => setDirection(primaryLabel.toLowerCase())}
-            className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
-              direction === primaryLabel.toLowerCase()
-                ? "bg-green-600 text-white"
-                : "bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
-            }`}
+            className={`drop-on-top relative flex-1 py-3 rounded-xl font-semibold transition-all overflow-hidden
+              ${direction === primaryLabel.toLowerCase()
+                ? "bg-cyan-500 text-white shadow-[4px_4px_8px_#0891b2,-2px_-2px_6px_#22d3ee] dark:shadow-none"
+                : "bg-slate-100 text-slate-600 border border-slate-200 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] dark:bg-white/5 dark:text-white/70 dark:border-white/10 dark:shadow-none hover:bg-slate-200 dark:hover:bg-white/10"}`}
           >
-            {primaryLabel}
+            <span className="relative z-[1]">{primaryLabel}</span>
           </button>
           <button
             onClick={() => setDirection(secondaryLabel.toLowerCase())}
-            className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
-              direction === secondaryLabel.toLowerCase()
-                ? "bg-red-600 text-white"
-                : "bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
-            }`}
+            className={`drop-on-top relative flex-1 py-3 rounded-xl font-semibold transition-all overflow-hidden
+              ${direction === secondaryLabel.toLowerCase()
+                ? "bg-rose-500 text-white shadow-[4px_4px_8px_#be123c,-2px_-2px_6px_#fb7185] dark:shadow-none"
+                : "bg-slate-100 text-slate-600 border border-slate-200 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] dark:bg-white/5 dark:text-white/70 dark:border-white/10 dark:shadow-none hover:bg-slate-200 dark:hover:bg-white/10"}`}
           >
-            {secondaryLabel}
+            <span className="relative z-[1]">{secondaryLabel}</span>
           </button>
         </div>
       </div>
 
       {/* Amount */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Amount (USD)
-        </label>
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Amount (USD)</label>
         <Input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Enter amount"
-          className="w-full bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 h-10"
+          className={inputClass}
           min="1"
           max={balance}
         />
-        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-2">
-          Available: ${formatCurrency(balance)}
-        </p>
+        <p className="text-xs text-slate-500 dark:text-white/50 mt-2">Available: ${formatCurrency(balance)}</p>
       </div>
 
       {/* Target Profit */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Target Profit (USD)
-        </label>
-        <Input
-          type="number"
-          value={targetProfit}
-          onChange={(e) => setTargetProfit(e.target.value)}
-          placeholder="Optional"
-          className="w-full bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 h-10"
-          min="0"
-        />
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Target Profit (USD)</label>
+        <Input type="number" value={targetProfit} onChange={(e) => setTargetProfit(e.target.value)} placeholder="Optional" className={inputClass} min="0" />
       </div>
 
       {/* Stop Loss */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Stop Loss (USD)
-        </label>
-        <Input
-          type="number"
-          value={stopLoss}
-          onChange={(e) => setStopLoss(e.target.value)}
-          placeholder="Optional"
-          className="w-full bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 h-10"
-          min="0"
-        />
+        <label className="block text-sm font-medium text-slate-600 dark:text-white/70 mb-2">Stop Loss (USD)</label>
+        <Input type="number" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} placeholder="Optional" className={inputClass} min="0" />
       </div>
 
       {/* Martingale */}
       <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="martingale"
-          checked={useMartingale}
-          onChange={(e) => setUseMartingale(e.target.checked)}
-          className="w-4 h-4 rounded border-slate-300 dark:border-zinc-600"
-        />
-        <label
-          htmlFor="martingale"
-          className="text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer"
-        >
-          Use Martingale
-        </label>
+        <input type="checkbox" id="martingale" checked={useMartingale} onChange={(e) => setUseMartingale(e.target.checked)} className="w-4 h-4 rounded border-slate-300 dark:border-white/30" />
+        <label htmlFor="martingale" className="text-sm font-medium text-slate-600 dark:text-white/70 cursor-pointer">Use Martingale</label>
       </div>
 
       {/* Place Trade */}
       <Button
         onClick={handlePlaceTrade}
         disabled={isLoading || !selectedMarket || !selectedTradeType || !amount}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 text-lg rounded-lg"
+        className="drop-on-top relative w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+          text-white font-bold py-6 text-lg rounded-xl transition-all overflow-hidden
+          shadow-[6px_6px_12px_#0891b2,-4px_-4px_10px_#22d3ee] dark:shadow-none disabled:opacity-50"
       >
-        {isLoading ? "Placing Trade..." : "Place Trade"}
+        <span className="relative z-[1]">{isLoading ? "Placing Trade..." : "Place Trade"}</span>
       </Button>
     </div>
   )

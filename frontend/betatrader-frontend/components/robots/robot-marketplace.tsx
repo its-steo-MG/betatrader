@@ -1,4 +1,3 @@
-// components/robots/robot-marketplace.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -91,7 +90,7 @@ export function RobotMarketplace({ balance, onBalanceChange }: RobotMarketplaceP
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  if (isLoading) return <p className="text-slate-500 dark:text-zinc-400">Loading robots...</p>
+  if (isLoading) return <p className="text-slate-500 dark:text-white/50">Loading robots...</p>
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -104,7 +103,9 @@ export function RobotMarketplace({ balance, onBalanceChange }: RobotMarketplaceP
         const accessKey = purchasedKeys[robot.id]
 
         return (
-          <div key={robot.id} className="relative rounded-3xl p-6 overflow-hidden flex flex-col border border-slate-200 bg-white text-slate-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
+          <div key={robot.id} className="relative rounded-3xl p-6 overflow-hidden flex flex-col
+            bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6,-8px_-8px_20px_#ffffff]
+            dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl">
             {robot.is_deriv_robot && (
               <div className="absolute top-4 left-4 z-10">
                 <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold px-4 py-1 rounded-full">DERIV PREMIUM</div>
@@ -112,19 +113,19 @@ export function RobotMarketplace({ balance, onBalanceChange }: RobotMarketplaceP
             )}
             {hasDiscount && !isDemoMode && !robot.is_deriv_robot && (
               <div className="absolute top-4 right-4 z-10">
-                <div className="bg-gradient-to-br from-pink-500 via-purple-600 to-cyan-500 text-white px-4 py-2 rounded-2xl font-bold">{discountPercent}% OFF</div>
+                <div className="bg-gradient-to-br from-cyan-500 via-blue-600 to-teal-500 text-white px-4 py-2 rounded-2xl font-bold">{discountPercent}% OFF</div>
               </div>
             )}
 
             {robot.image && <img src={robot.image} alt={robot.name} className="w-full h-40 object-cover rounded-2xl mb-4" />}
             <div className="flex-1">
-              <h3 className="text-lg font-bold mb-2">{robot.name}</h3>
-              <p className="text-sm text-slate-500 dark:text-zinc-400 mb-4 line-clamp-3">{robot.description}</p>
-              {robot.available_for_demo && <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-4">Available for demo</p>}
+              <h3 className="text-lg font-bold mb-2 text-slate-800 dark:text-white">{robot.name}</h3>
+              <p className="text-sm text-slate-500 dark:text-white/50 mb-4 line-clamp-3">{robot.description}</p>
+              {robot.available_for_demo && <p className="text-xs text-cyan-600 dark:text-cyan-400 mb-4">Available for demo</p>}
               {robot.is_deriv_robot && <p className="text-xs text-amber-600 dark:text-amber-400 mb-4">Purchase to get Deriv access key</p>}
             </div>
 
-            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-zinc-800">
+            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   {hasDiscount && !robot.is_deriv_robot ? (
@@ -133,23 +134,28 @@ export function RobotMarketplace({ balance, onBalanceChange }: RobotMarketplaceP
                       <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">${Number(robot.discounted_price).toFixed(2)}</p>
                     </>
                   ) : (
-                    <p className="text-2xl font-bold">{isDemoMode ? "Free for Demo" : `$${effectivePrice.toFixed(2)}`}</p>
+                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{isDemoMode ? "Free for Demo" : `$${effectivePrice.toFixed(2)}`}</p>
                   )}
                 </div>
                 {!isOwned ? (
-                  <Button onClick={() => handlePurchaseRobot(robot.id)} disabled={purchasingId === robot.id || (!isDemoMode && balance < effectivePrice)} className="bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-2xl px-6 py-6 font-bold disabled:opacity-50">
+                  <Button onClick={() => handlePurchaseRobot(robot.id)} disabled={purchasingId === robot.id || (!isDemoMode && balance < effectivePrice)}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-2xl px-6 py-6 font-bold disabled:opacity-50
+                      shadow-[4px_4px_12px_#0891b2,-2px_-2px_8px_#22d3ee] dark:shadow-none">
                     {purchasingId === robot.id ? "Purchasing..." : robot.is_deriv_robot ? "Get access key" : "Buy Now"}
                   </Button>
                 ) : (
-                  <div className="text-emerald-600 dark:text-emerald-400 font-semibold">Owned ✓</div>
+                  <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Owned ✓</div>
                 )}
               </div>
 
               {isOwned && robot.is_deriv_robot && accessKey && (
-                <div className="mt-4 p-4 rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950">
+                <div className="mt-4 p-4 rounded-2xl border border-amber-300 dark:border-amber-500/30
+                  bg-amber-50 dark:bg-amber-500/10">
                   <p className="text-xs text-amber-700 dark:text-amber-300 mb-2 font-medium">YOUR DERIV ACCESS KEY</p>
-                  <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 p-3 rounded-xl font-mono text-sm break-all border border-amber-200 dark:border-amber-800">
-                    <span className="flex-1 select-all">{accessKey}</span>
+                  <div className="flex items-center gap-3 p-3 rounded-xl font-mono text-sm break-all
+                    bg-white border border-amber-200 shadow-[inset_2px_2px_4px_#fef3c7]
+                    dark:bg-white/10 dark:border-amber-500/30 dark:shadow-none">
+                    <span className="flex-1 select-all text-slate-800 dark:text-white">{accessKey}</span>
                     <Button size="sm" variant="ghost" onClick={() => copyToClipboard(robot.id, accessKey)} className="text-amber-600 dark:text-amber-400">
                       {copiedId === robot.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </Button>

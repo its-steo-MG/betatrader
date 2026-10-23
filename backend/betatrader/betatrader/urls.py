@@ -1,22 +1,26 @@
-"""
-URL configuration for betatrader project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+# traderiser/traderiser/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/accounts/', include('accounts.urls')),
+    path('api/trading/', include('trading.urls')),
+    path('api/dashboard/', include('dashboard.urls')),
+    path('api/wallet/', include('wallet.urls')),
+    path('api/forex/', include('forex.urls')),
+    path('api/agents/', include('agents.urls')),
+    path('api/customercare/', include('customercare.urls')),
+    path('api/management/', include('management.urls')),
+    path('api/copy-trading/', include('copy_trading.urls')),
+    path('api/mpesa/', include('mpesa_simulator.urls')),  
+    path('api/deriv/', include('deriv.urls')),
+    path('api/mpesa-notif/', include('mpesa_message_notification.urls')),
+    path('api/mt5/', include('mt5.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path('api/equity/', include('equity.urls')),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

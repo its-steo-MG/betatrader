@@ -13,14 +13,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <main className="relative min-h-screen text-foreground p-4 md:p-8 overflow-hidden">
-      <div className="fixed inset-0 z-0 hidden dark:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-      </div>
-      <div className="fixed inset-0 z-0 block dark:hidden bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-
-      <div className="relative z-10 max-w-6xl mx-auto space-y-8">
+    <main className="relative min-h-screen text-foreground p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         <ProfileHeader />
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
@@ -28,10 +22,24 @@ export default function ProfilePage() {
           </div>
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-                <TabsTrigger value="security">Security</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 p-1 rounded-2xl
+                bg-slate-100 border border-slate-200 shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]
+                dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none">
+                <TabsTrigger value="overview" className="rounded-xl
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white
+                  data-[state=active]:shadow-[3px_3px_8px_#0891b2] dark:data-[state=active]:shadow-none">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="rounded-xl
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white
+                  data-[state=active]:shadow-[3px_3px_8px_#0891b2] dark:data-[state=active]:shadow-none">
+                  Settings
+                </TabsTrigger>
+                <TabsTrigger value="security" className="rounded-xl
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white
+                  data-[state=active]:shadow-[3px_3px_8px_#0891b2] dark:data-[state=active]:shadow-none">
+                  Security
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="space-y-6 mt-6">
                 <TradingStats />

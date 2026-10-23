@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { BalanceCard } from "@/components/dashboard/balance-card";
-import { TransactionHistory } from "@/components/dashboard/transaction-history";
 import { TradingViewWidget } from "@/components/dashboard/trading-view";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { Button } from "@/components/ui/button";
+import { TransactionHistory } from "@/components/dashboard/transaction-history";
 import { toast } from "sonner";
-import { ActionButtons } from "@/components/dashboard/action-buttons";
+import { Eye, EyeOff, Activity, Wallet } from "lucide-react";
+import { formatCurrency } from "@/lib/format-currency";
 
 interface Account {
   id: number;
@@ -55,68 +53,47 @@ export default function DashboardPage() {
 
   const normalizeDashboardData = (raw: unknown): DashboardData | null => {
     if (!raw || typeof raw !== "object") return null;
-
     const rawData = raw as Record<string, unknown>;
-
     if (!rawData.user || typeof rawData.user !== "object") return null;
-
     const user = rawData.user as Record<string, unknown>;
 
     const normalizedUserAccounts: Account[] = Array.isArray(user.accounts)
-      ? user.accounts
-          .map((acc: unknown) => {
-            if (!acc || typeof acc !== "object") return null;
-            const a = acc as Record<string, unknown>;
-
-            return {
-              id: Number(a.id),
-              account_type: String(a.account_type || ""),
-              balance: Number(a.balance) || 0,
-              kyc_verified: Boolean(a.kyc_verified),
-            };
-          })
-          .filter((acc): acc is Account => acc !== null)
+      ? user.accounts.map((acc: unknown) => {
+          if (!acc || typeof acc !== "object") return null;
+          const a = acc as Record<string, unknown>;
+          return {
+            id: Number(a.id),
+            account_type: String(a.account_type || ""),
+            balance: Number(a.balance) || 0,
+            kyc_verified: Boolean(a.kyc_verified),
+          };
+        }).filter((acc): acc is Account => acc !== null)
       : [];
 
     const normalizedAccounts = Array.isArray(rawData.accounts)
-      ? (rawData.accounts as unknown[])
-          .map((acc: unknown) => {
-            if (!acc || typeof acc !== "object") return null;
-            const a = acc as Record<string, unknown>;
-
-            const transactions: Transaction[] = Array.isArray(a.transactions)
-              ? (a.transactions as unknown[])
-                  .map((tx: unknown) => {
-                    if (!tx || typeof tx !== "object") return null;
-                    const t = tx as Record<string, unknown>;
-
-                    return {
-                      id: Number(t.id),
-                      amount: Number(t.amount) || 0,
-                      transaction_type: (
-                        ["deposit", "withdrawal", "trade"].includes(
-                          String(t.transaction_type)
-                        )
-                          ? (t.transaction_type as
-                              | "deposit"
-                              | "withdrawal"
-                              | "trade")
-                          : "deposit"
-                      ),
-                      description: String(t.description || ""),
-                      created_at: String(t.created_at || ""),
-                    };
-                  })
-                  .filter((tx): tx is Transaction => tx !== null)
-              : [];
-
-            return {
-              account_type: String(a.account_type || ""),
-              balance: Number(a.balance) || 0,
-              transactions,
-            };
-          })
-          .filter((acc): acc is NonNullable<typeof acc> => acc !== null)
+      ? (rawData.accounts as unknown[]).map((acc: unknown) => {
+          if (!acc || typeof acc !== "object") return null;
+          const a = acc as Record<string, unknown>;
+          const transactions: Transaction[] = Array.isArray(a.transactions)
+            ? (a.transactions as unknown[]).map((tx: unknown) => {
+                if (!tx || typeof tx !== "object") return null;
+                const t = tx as Record<string, unknown>;
+                return {
+                  id: Number(t.id),
+                  amount: Number(t.amount) || 0,
+                  transaction_type: (["deposit", "withdrawal", "trade"].includes(String(t.transaction_type))
+                    ? t.transaction_type : "deposit") as "deposit" | "withdrawal" | "trade",
+                  description: String(t.description || ""),
+                  created_at: String(t.created_at || ""),
+                };
+              }).filter((tx): tx is Transaction => tx !== null)
+            : [];
+          return {
+            account_type: String(a.account_type || ""),
+            balance: Number(a.balance) || 0,
+            transactions,
+          };
+        }).filter((acc): acc is NonNullable<typeof acc> => acc !== null)
       : [];
 
     return {
@@ -135,53 +112,35 @@ export default function DashboardPage() {
   const fetchData = () => {
     setLoading(true);
     setError(null);
-
-    api
-      .getDashboard()
+    api.getDashboard()
       .then((res) => {
-        if (res.error) {
-          setError(res.error);
-          return;
-        }
-
+        if (res.error) { setError(res.error); return; }
         const normalizedData = normalizeDashboardData(res.data);
         if (normalizedData) {
           setData(normalizedData);
-
           const activeId = localStorage.getItem("active_account_id");
-          const found = normalizedData.user.accounts.find(
-            (acc) => String(acc.id) === String(activeId)
-          );
+          const found = normalizedData.user.accounts.find((acc) => String(acc.id) === String(activeId));
           if (found) setActiveAccount(found);
         } else {
-          setError("Invalid dashboard data received from server");
+          setError("Invalid dashboard data");
         }
-
         const activeType = localStorage.getItem("account_type") || "standard";
         setSelectedAccount(activeType);
         setLoginType(activeType === "demo" ? "demo" : "real");
       })
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : "Failed to load dashboard";
-        setError(message);
-      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load"))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       fetchData();
-
       const handleSessionUpdate = () => {
-        const activeType = localStorage.getItem("account_type") || "standard";
-        setSelectedAccount(activeType);
+        setSelectedAccount(localStorage.getItem("account_type") || "standard");
         fetchData();
       };
-
       window.addEventListener("session-updated", handleSessionUpdate);
-      return () =>
-        window.removeEventListener("session-updated", handleSessionUpdate);
+      return () => window.removeEventListener("session-updated", handleSessionUpdate);
     }
   }, []);
 
@@ -192,157 +151,163 @@ export default function DashboardPage() {
       showSuccess("Demo balance reset to $10,000");
       window.dispatchEvent(new Event("session-updated"));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to reset demo balance";
-      showError(message);
-    }
-  };
-
-  const handleCreateProFx = async () => {
-    try {
-      const res = await api.createAdditionalAccount({ account_type: "pro-fx" });
-      if (res.error) throw new Error(res.error);
-
-      showSuccess("Pro-FX account created successfully");
-      fetchData();
-      window.dispatchEvent(new Event("session-updated"));
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create Pro-FX account";
-      showError(message);
+      showError(err instanceof Error ? err.message : "Failed to reset");
     }
   };
 
   const isRealAccount = loginType === "real";
-  const selectedAccountData = data?.accounts?.find(
-    (a) => a.account_type === selectedAccount
-  );
-  const hasProFx =
-    data?.user?.accounts?.some((acc) => acc.account_type === "pro-fx") ?? false;
+  const selectedAccountData = data?.accounts?.find((a) => a.account_type === selectedAccount);
+  const txCount = selectedAccountData?.transactions?.length || 0;
+  const isDemo = loginType === "demo" || activeAccount?.account_type === "mt5-demo" || activeAccount?.account_type === "demo";
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-foreground mx-auto mb-4" />
-          <p className="text-base sm:text-xl">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-destructive">
-        <div className="text-center max-w-md p-4 sm:p-6">
-          <div className="text-4xl sm:text-6xl mb-4">⚠️</div>
-          <h2 className="text-lg sm:text-xl font-bold mb-2">Error</h2>
-          <p className="mb-4 sm:mb-6 text-sm sm:text-base text-muted-foreground">
-            {error}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-bold text-sm sm:text-base"
-          >
-            Retry
-          </button>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+        <div className="text-center">
+          <p className="text-slate-700 dark:text-white mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-cyan-500 text-white rounded-lg">Retry</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen text-foreground overflow-hidden">
-      {/* ========== BACKGROUND ========== */}
-      {/* Dark mode: your beautiful original gradient + floating orbs */}
+    <div className="relative min-h-screen bg-slate-100 dark:bg-slate-950">
+      {/* Dark mode background */}
       <div className="fixed inset-0 z-0 dark:block hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl animate-float delay-1000" />
-        <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-purple-700/8 rounded-full blur-3xl animate-float delay-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-blue-900/15 via-transparent to-transparent" />
       </div>
-
-      {/* Light mode: clean soft background */}
+      {/* Light mode background */}
       <div className="fixed inset-0 z-0 block dark:hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-100 to-slate-50" />
       </div>
 
-      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 dashboard-refresh">
-        <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6">
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-500">
-            <DashboardHeader
-              username={data?.user?.username ?? ""}
-              email={data?.user?.email ?? ""}
-              isRealAccount={isRealAccount}
-              accountType={selectedAccount}
-            />
+      <div className="relative z-10 p-4 lg:p-6">
+        <div className="max-w-[1400px] mx-auto space-y-4">
+          
+          {/* TOP BAR */}
+          <div className="flex items-center justify-between rounded-2xl px-5 py-3
+            bg-white border border-slate-200
+            shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff]
+            dark:bg-white/[0.07] dark:border-white/20 dark:shadow-none dark:backdrop-blur-[32px] dark:saturate-150">
+            <div className="flex items-center gap-4">
+              <img src="/images/traderiser-logo-192.png" alt="BetaTrader" className="h-9 w-9 rounded-lg" />
+              <div>
+                <p className="text-xs text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">BetaTrader</p>
+                <h1 className="text-slate-800 dark:text-white font-semibold">{data?.user?.username}</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium
+                ${isRealAccount 
+                  ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300" 
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"}`}>
+                {isRealAccount ? "● Live" : "● Demo"}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{selectedAccount}</span>
+            </div>
           </div>
 
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-500 delay-100">
-            <BalanceCard
-              balance={selectedAccountData?.balance || 0}
-              username={data?.user?.username ?? ""}
-              isRealAccount={isRealAccount}
-              showBalance={showBalance}
-              onToggleBalance={() => setShowBalance(!showBalance)}
-              accountType={selectedAccount}
-            />
-          </div>
+          {/* BENTO GRID */}
+          <div className="grid grid-cols-12 gap-4">
+            
+            {/* Balance Card */}
+            <div className="col-span-12 lg:col-span-4 rounded-2xl p-6 text-white relative overflow-hidden
+              bg-gradient-to-br from-cyan-500 to-blue-600
+              shadow-[10px_10px_20px_#0e7490,-6px_-6px_16px_#22d3ee]
+              dark:shadow-none">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/15 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="relative">
+                <p className="text-cyan-100 text-sm mb-1">Available Balance</p>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-4xl font-bold tracking-tight">
+                    {showBalance ? `$${formatCurrency(selectedAccountData?.balance || 0)}` : "••••••"}
+                  </h2>
+                  <button onClick={() => setShowBalance(!showBalance)} className="p-1.5 hover:bg-white/10 rounded-lg">
+                    {showBalance ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-sm text-cyan-100">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  {isDemo ? "Practice Mode" : "Live Trading"}
+                </div>
+              </div>
+            </div>
 
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 delay-200">
-            <ActionButtons
-              isDemo={
-                loginType === "demo" ||
-                activeAccount?.account_type === "mt5-demo" ||
-                activeAccount?.account_type === "demo"
-              }
-              accountType={activeAccount?.account_type}
-            />
-          </div>
+            {/* Stats Cards */}
+            <div className="col-span-6 lg:col-span-2 rounded-2xl p-5 flex flex-col justify-center
+              bg-white border border-slate-200
+              shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff]
+              dark:bg-white/[0.07] dark:border-white/20 dark:shadow-none dark:backdrop-blur-[32px]">
+              <Activity className="text-cyan-500 dark:text-cyan-400 mb-2" size={20} />
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{txCount}</p>
+              <p className="text-xs text-slate-500 dark:text-white/60">Transactions</p>
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 delay-300">
-            {isRealAccount ? (
-              !hasProFx && (
-                <Button
-                  onClick={handleCreateProFx}
-                  className="dashboard-glass-action dashboard-glass-action-primary w-full sm:flex-1"
+            <div className="col-span-6 lg:col-span-2 rounded-2xl p-5 flex flex-col justify-center
+              bg-white border border-slate-200
+              shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff]
+              dark:bg-white/[0.07] dark:border-white/20 dark:shadow-none dark:backdrop-blur-[32px]">
+              <Wallet className="text-cyan-500 dark:text-cyan-400 mb-2" size={20} />
+              <p className="text-3xl font-bold text-slate-800 dark:text-white">{data?.user?.accounts?.length || 0}</p>
+              <p className="text-xs text-slate-500 dark:text-white/60">Accounts</p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="col-span-12 lg:col-span-4 rounded-2xl p-5
+              bg-white border border-slate-200
+              shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff]
+              dark:bg-white/[0.07] dark:border-white/20 dark:shadow-none dark:backdrop-blur-[32px]">
+              <p className="text-xs text-slate-500 dark:text-white/60 mb-3 uppercase tracking-wide">Quick Actions</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => !isDemo && window.location.assign("/wallet")}
+                  disabled={isDemo}
+                  className={`drop-on-top relative flex-1 py-3 rounded-xl font-medium text-sm transition-all overflow-hidden
+                    ${isDemo 
+                      ? "bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-white/5 dark:text-white/30" 
+                      : "bg-cyan-500 text-white shadow-[6px_6px_12px_#0891b2,-4px_-4px_10px_#22d3ee] dark:bg-gradient-to-br dark:from-cyan-500/70 dark:to-blue-500/70 dark:shadow-none dark:border dark:border-white/30"}`}
                 >
-                  <span className="relative flex items-center justify-center gap-2">
-                    <span className="text-lg">✨</span>
-                    Create Pro-FX Account
-                  </span>
-                </Button>
-              )
-            ) : (
-              <Button
-                onClick={handleResetDemo}
-                className="dashboard-glass-action dashboard-glass-action-primary w-full sm:flex-1"
-              >
-                <span className="relative flex items-center justify-center gap-2">
-                  <span className="text-lg">🔄</span>
-                  Reset Demo Balance to $10,000
-                </span>
-              </Button>
-            )}
-          </div>
-
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 delay-400">
-            <div className="min-w-0">
-              <TradingViewWidget
-                symbol={selectedAccount === "pro-fx" ? "EURUSD" : "NASDAQ:AAPL"}
-              />
+                  <span className="relative z-[1]">Deposit</span>
+                </button>
+                <button
+                  onClick={() => !isDemo && window.location.assign("/wallet")}
+                  disabled={isDemo}
+                  className={`drop-on-top relative flex-1 py-3 rounded-xl font-medium text-sm transition-all overflow-hidden
+                    ${isDemo 
+                      ? "bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-white/5 dark:text-white/30" 
+                      : "bg-slate-200 text-slate-700 shadow-[6px_6px_12px_#cbd5e1,-4px_-4px_10px_#ffffff] dark:bg-white/[0.08] dark:text-white dark:shadow-none dark:border dark:border-white/20"}`}
+                >
+                  <span className="relative z-[1]">Withdraw</span>
+                </button>
+              </div>
+              {isDemo && (
+                <button onClick={handleResetDemo} className="drop-on-top relative w-full mt-3 py-2 text-xs text-cyan-600 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-500/30 rounded-lg overflow-hidden">
+                  <span className="relative z-[1]">Reset Demo Balance</span>
+                </button>
+              )}
             </div>
-          </div>
 
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 delay-500">
-            <div className="min-w-0">
-              <TransactionHistory
-                transactions={selectedAccountData?.transactions || []}
-              />
+            {/* Chart */}
+            <div className="col-span-12 lg:col-span-8">
+              <TradingViewWidget symbol="NASDAQ:AAPL" />
             </div>
+
+            {/* Activity - Uses TransactionHistory component */}
+            <div className="col-span-12 lg:col-span-4">
+              <TransactionHistory transactions={selectedAccountData?.transactions?.slice(0, 8) || []} />
+            </div>
+
           </div>
         </div>
       </div>

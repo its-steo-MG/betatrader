@@ -1,10 +1,7 @@
-
 "use client"
 
 import { Zap } from "lucide-react"
 import { motion } from "framer-motion"
-
-
 
 interface TradeExecutionBadgeProps {
   activeTradesCount: number
@@ -20,20 +17,17 @@ export function TradeExecutionBadge({ activeTradesCount, onClick }: TradeExecuti
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0, opacity: 0 }}
       onClick={onClick}
-      className="fixed bottom-8 right-8 z-40 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+      className="fixed bottom-20 right-4 sm:bottom-6 sm:right-4 z-50 flex items-center gap-1.5 px-3 py-2
+        bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+        text-white font-semibold text-xs rounded-full transition-all duration-200
+        shadow-lg"
     >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-      >
-        <Zap className="w-5 h-5" />
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+        <Zap className="w-4 h-4" />
       </motion.div>
-      <span className="text-sm">{activeTradesCount} Active</span>
-      <motion.div
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"
-      />
+      <span>{activeTradesCount}</span>
+      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+        className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full" />
     </motion.button>
   )
 }

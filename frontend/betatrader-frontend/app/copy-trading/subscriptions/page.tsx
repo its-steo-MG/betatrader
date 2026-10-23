@@ -19,7 +19,7 @@ interface Subscription {
   is_active: boolean
 }
 
-const card = "bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800"
+const card = "bg-white dark:bg-white/[0.05] border-slate-200 dark:border-white/10 shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:shadow-none dark:backdrop-blur-xl"
 
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -70,13 +70,13 @@ export default function SubscriptionsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight">My <span className="text-pink-600 dark:text-pink-400">Subscriptions</span></h1>
+        <h1 className="text-4xl font-bold tracking-tight">My <span className="text-cyan-600 dark:text-cyan-400">Subscriptions</span></h1>
         <p className="text-slate-500 dark:text-zinc-400">Manage your active copy trading subscriptions and track performance</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card className={card}><CardContent className="p-4 sm:p-6 space-y-2"><div className="flex items-center gap-2 text-blue-600 dark:text-blue-400"><Users size={18} /><span className="text-sm text-slate-500 dark:text-zinc-400 uppercase font-semibold">Active Copies</span></div><p className="text-3xl font-bold">{activeSubscriptions.length}</p><p className="text-xs text-slate-500 dark:text-zinc-400">{pausedSubscriptions.length} paused</p></CardContent></Card>
         <Card className={card}><CardContent className="p-4 sm:p-6 space-y-2"><div className="flex items-center gap-2 text-amber-600 dark:text-amber-400"><TrendingUp size={18} /><span className="text-sm text-slate-500 dark:text-zinc-400 uppercase font-semibold">Total Allocated</span></div><p className="text-3xl font-bold">${totalAllocated.toFixed(2)}</p><p className="text-xs text-slate-500 dark:text-zinc-400">Across all traders</p></CardContent></Card>
-        <Card className={card}><CardContent className="p-4 sm:p-6 space-y-2"><div className="flex items-center gap-2 text-pink-600 dark:text-pink-400"><TrendingUp size={18} /><span className="text-sm text-slate-500 dark:text-zinc-400 uppercase font-semibold">Total P&L</span></div><p className={`text-3xl font-bold ${totalPnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toFixed(2)}</p><p className="text-xs text-slate-500 dark:text-zinc-400">{totalAllocated > 0 ? Math.abs((totalPnl / totalAllocated) * 100).toFixed(2) : "0"}% return</p></CardContent></Card>
+        <Card className={card}><CardContent className="p-4 sm:p-6 space-y-2"><div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400"><TrendingUp size={18} /><span className="text-sm text-slate-500 dark:text-zinc-400 uppercase font-semibold">Total P&L</span></div><p className={`text-3xl font-bold ${totalPnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toFixed(2)}</p><p className="text-xs text-slate-500 dark:text-zinc-400">{totalAllocated > 0 ? Math.abs((totalPnl / totalAllocated) * 100).toFixed(2) : "0"}% return</p></CardContent></Card>
       </div>
       {activeSubscriptions.length > 0 && (
         <div className="space-y-4">
@@ -96,7 +96,7 @@ export default function SubscriptionsPage() {
             <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-zinc-800 rounded-full flex items-center justify-center"><Users size={32} className="text-slate-400" /></div>
             <h3 className="text-xl font-semibold">No Active Subscriptions</h3>
             <p className="text-slate-500 dark:text-zinc-400">Start copying top traders to grow your portfolio automatically</p>
-            <Link href="/copy-trading"><Button className="bg-gradient-to-r from-pink-500 to-pink-600 text-white">Browse Traders</Button></Link>
+            <Link href="/copy-trading"><Button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">Browse Traders</Button></Link>
           </CardContent>
         </Card>
       )}

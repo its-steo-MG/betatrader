@@ -6,7 +6,6 @@ from decimal import Decimal
 from django.apps import apps
 from django.utils import timezone
 from datetime import timedelta
-from django.core.mail import send_mail
 import uuid
 import logging
 
@@ -24,6 +23,7 @@ class User(AbstractUser):
     )
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True, verbose_name="Country")
     is_sashi = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     is_marketo = models.BooleanField(default=False)
@@ -65,17 +65,16 @@ class User(AbstractUser):
         indexes = [models.Index(fields=['referral_code'])]
 
     def generate_referral_code(self):
-        code = f"MRK-{uuid.uuid4().hex[:8].upper()}"
+        code = f"BT-{uuid.uuid4().hex[:8].upper()}"
         while User.objects.filter(referral_code=code).exists():
-            code = f"MRK-{uuid.uuid4().hex[:8].upper()}"
+            code = f"BT-{uuid.uuid4().hex[:8].upper()}"
         return code
 
     def __str__(self):
         return self.username
 
-    # ====================== MULTI-PLATFORM ACCOUNT LOGIC ======================
-    def can_create_account(self, account_type: str, platform: str = 'traderiser') -> bool:
-        """Extended for MT5 and Deriv"""
+    def can_create_account(self, account_type: str, platform: str = 'betatrader') -> bool:
+        """Users can only have Standard and MT5 accounts (no ProFX)"""
         existing_accounts = self.accounts.filter(platform=platform)
         existing_types = {acc.account_type for acc in existing_accounts}
 
@@ -90,27 +89,25 @@ class User(AbstractUser):
             if account_type == 'deriv-demo':
                 return 'deriv-demo' not in existing_types
             if account_type == 'deriv':
-                return 'deriv' not in existing_types  # Usually after KYC
+                return 'deriv' not in existing_types
             return False
 
-        # Traderiser platform (original logic)
-        if len(existing_accounts) >= 3:
+        # BetaTrader platform - only standard and demo
+        if len(existing_accounts) >= 2:
             return False
         if account_type == 'demo' and 'demo' in existing_types:
             return False
         if account_type == 'standard' and 'standard' in existing_types:
             return False
-        if account_type == 'pro-fx':
-            return 'standard' in existing_types and 'pro-fx' not in existing_types
-        if account_type not in ['standard', 'demo', 'pro-fx']:
+        if account_type not in ['standard', 'demo']:
             return False
         return True
 
     def create_default_accounts(self):
-        """Create default accounts: Traderiser + MT5 only (no Deriv demo)"""
+        """Create default accounts: BetaTrader Standard + Demo + MT5"""
         defaults = [
-            {'platform': 'traderiser', 'account_type': 'demo'},
-            {'platform': 'traderiser', 'account_type': 'standard'},
+            {'platform': 'betatrader', 'account_type': 'demo'},
+            {'platform': 'betatrader', 'account_type': 'standard'},
             {'platform': 'mt5', 'account_type': 'mt5-demo'},
             {'platform': 'mt5', 'account_type': 'mt5'},
         ]
@@ -128,9 +125,7 @@ class User(AbstractUser):
         logger.info(f"Created default accounts for {self.username}: {created}")
         return created
 
-        # ====================== SUSPENSION METHODS ======================
     def suspend(self, suspension_type: str, reason: str, duration_days: int = None, suspended_by=None):
-        """Suspend user (temporary or permanent)"""
         self.is_suspended = True
         self.suspension_type = suspension_type
         self.suspension_reason = reason
@@ -141,7 +136,6 @@ class User(AbstractUser):
         else:
             self.suspended_until = None
 
-        # Log to history
         history_entry = {
             'type': 'suspended',
             'suspension_type': suspension_type,
@@ -150,13 +144,10 @@ class User(AbstractUser):
             'suspended_by': suspended_by.username if suspended_by else 'admin'
         }
         self.suspension_history.append(history_entry)
-
         self.save()
-
         logger.info(f"User {self.username} suspended ({suspension_type})")
 
     def unsuspend(self, unsuspended_by=None):
-        """Unsuspend user and log it"""
         if not self.is_suspended:
             return
 
@@ -166,7 +157,6 @@ class User(AbstractUser):
         self.suspended_at = None
         self.suspended_until = None
 
-        # Log to history
         history_entry = {
             'type': 'unsuspended',
             'reason': 'Admin unsuspended' if unsuspended_by else 'Automatic expiration',
@@ -174,10 +164,9 @@ class User(AbstractUser):
             'unsuspended_by': unsuspended_by.username if unsuspended_by else 'system'
         }
         self.suspension_history.append(history_entry)
-
         self.save()
-
         logger.info(f"User {self.username} unsuspended")
+
     @property
     def is_permanently_suspended(self):
         return self.is_suspended and self.suspension_type == 'permanent'
@@ -189,11 +178,10 @@ class User(AbstractUser):
         return not self.suspended_until or self.suspended_until > timezone.now()
 
     def clean_up_expired_suspension(self):
-        if self.is_temporarily_suspended and self.suspended_until <= timezone.now():
+        if self.is_temporarily_suspended and self.suspended_until and self.suspended_until <= timezone.now():
             self.unsuspend()
 
 
-# ====================== OTHER MODELS ======================
 class SuspensionEvidence(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending Review'),
@@ -211,40 +199,33 @@ class SuspensionEvidence(models.Model):
     def __str__(self):
         return f"Evidence for {self.user.username} - {self.status}"
 
+
 class Account(models.Model):
     PLATFORM_CHOICES = [
-        ('traderiser', 'Traderiser'),
+        ('betatrader', 'BetaTrader'),
         ('mt5', 'MT5'),
         ('deriv', 'Deriv'),
     ]
 
     ACCOUNT_TYPES = [
-        ('standard', 'TradeRiser Standard'),
-        ('pro', 'TradeRiser Pro'),
-        ('islamic', 'TradeRiser Islamic'),
-        ('options', 'TradeRiser Options'),
-        ('crypto', 'TradeRiser Crypto'),
-        ('demo', 'TradeRiser Demo'),
-        ('pro-fx', 'TradeRiser Pro-FX'),
-        # MT5
+        ('standard', 'BetaTrader Standard'),
+        ('demo', 'BetaTrader Demo'),
         ('mt5', 'MT5 Real'),
         ('mt5-demo', 'MT5 Demo'),
-        # Deriv
         ('deriv', 'Deriv Real'),
         ('deriv-demo', 'Deriv Demo'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='accounts')
-    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, default='traderiser')
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, default='betatrader')
     account_type = models.CharField(max_length=50, choices=ACCOUNT_TYPES)
     
-    # Platform-specific credentials
     mt5_login = models.CharField(max_length=50, blank=True, null=True)
     mt5_password = models.CharField(max_length=128, blank=True, null=True)
     mt5_server = models.CharField(max_length=100, blank=True, null=True)
 
     deriv_login = models.CharField(max_length=50, blank=True, null=True)
-    deriv_token = models.CharField(max_length=255, blank=True, null=True)  # Store encrypted in production
+    deriv_token = models.CharField(max_length=255, blank=True, null=True)
     deriv_server = models.CharField(max_length=100, blank=True, null=True, default='green.derivws.com')
 
     is_wallet_verified = models.BooleanField(
@@ -274,7 +255,6 @@ class Account(models.Model):
             wallet = Wallet.objects.get(account=self, wallet_type='main', currency=usd)
             return wallet.balance
         except Exception:
-            # Default demo balances
             if self.account_type in ['demo', 'deriv-demo']:
                 return Decimal('10000.00')
             if self.account_type == 'mt5-demo':
@@ -326,7 +306,8 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.platform} - {self.account_type}"
-    
+
+
 class KYCSubmission(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending Review'),

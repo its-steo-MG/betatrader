@@ -43,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'phone',
+            'id', 'username', 'email', 'phone', 'country',
             'is_sashi', 'is_email_verified', 'accounts', 'is_staff',
             'is_marketo', 'referral_link', 'is_suspended', 
             'suspension_details', 'evidence_status',
@@ -60,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_referral_link(self, obj):
         if obj.is_marketo and obj.referral_code:
-            return f"https://traderiserapp.com/signup/?ref={obj.referral_code}"
+            return f"https://betatrader.app/signup/?ref={obj.referral_code}"
         return None
 
     def get_suspension_details(self, obj):

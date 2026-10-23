@@ -10,7 +10,7 @@ export function BlockedMessage() {
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
           Your account is blocked
         </h2>
-        <p className="text-slate-500 dark:text-zinc-400 max-w-sm">
+        <p className="text-slate-500 dark:text-white/50 max-w-sm">
           You cannot access customer support at this time. Please contact our team
           directly if you believe this is an error.
         </p>

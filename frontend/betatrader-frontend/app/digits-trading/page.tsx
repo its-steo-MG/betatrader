@@ -695,9 +695,10 @@ export default function TradingPage() {
 
   return (
     <div className="relative min-h-screen text-foreground flex flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-black dark:via-zinc-950 dark:to-black" />
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-400/20 blur-3xl dark:bg-purple-600/30" />
-      <div className="pointer-events-none absolute top-1/3 -right-24 h-80 w-80 rounded-full bg-pink-300/20 blur-3xl dark:bg-fuchsia-600/20" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/20" />
+      <div className="pointer-events-none absolute top-1/4 -right-32 h-80 w-80 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/15" />
+      <div className="pointer-events-none absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-teal-300/10 blur-3xl dark:bg-teal-500/10" />
       <div className="relative z-10 flex min-h-screen flex-col">
       <TopBar
         muted={muted}
@@ -793,9 +794,14 @@ export default function TradingPage() {
           ) : tab === "trade" ? (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
               <div className="lg:col-span-8 space-y-5">
-                <div className="relative h-[19rem] sm:h-80 md:h-96 lg:h-[480px] xl:h-[560px] rounded-3xl bg-card border border-border overflow-hidden">
+                <div className="relative h-[19rem] sm:h-80 md:h-96 lg:h-[480px] xl:h-[560px] rounded-3xl overflow-hidden
+                  bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6,-8px_-8px_20px_#ffffff]
+                  dark:bg-white/[0.03] dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl">
                   <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 max-w-[calc(100%-1.25rem)]">
-                    <div className="bg-card px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl flex items-center gap-2 sm:gap-3 border border-border shadow-sm max-w-[calc(100vw-3.5rem)]">
+                    <div className="px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl flex items-center gap-2 sm:gap-3
+                        bg-white/80 border border-slate-200 shadow-[4px_4px_10px_#d1d5db,-4px_-4px_10px_#ffffff]
+                        dark:bg-white/10 dark:border-white/20 dark:shadow-none dark:backdrop-blur-xl
+                        max-w-[calc(100vw-3.5rem)]">
                       <div className="text-blue-600 dark:text-blue-400 text-base sm:text-xl">📈</div>
                       <select
                         value={selectedMarketId ?? ""}

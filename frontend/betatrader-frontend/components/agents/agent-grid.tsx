@@ -1,7 +1,6 @@
-// components/agents/agent-grid.tsx
 "use client"
 
-import AgentCard from "./agent-card"  // Correct: default import
+import AgentCard from "./agent-card"
 
 interface Agent {
   id: number
@@ -29,26 +28,18 @@ export default function AgentGrid({ agents, loading }: AgentGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-slate-200 dark:bg-zinc-700 rounded-2xl h-96 animate-pulse" />
-        ))}
+        {[...Array(6)].map((_, i) => <div key={i} className="bg-slate-200 dark:bg-white/10 rounded-2xl h-96 animate-pulse" />)}
       </div>
     )
   }
 
   if (agents.length === 0) {
-    return (
-      <div className="text-center py-12 sm:py-16">
-        <p className="text-slate-500 dark:text-zinc-400 text-base sm:text-lg">No agents found. Try adjusting your filters.</p>
-      </div>
-    )
+    return <div className="text-center py-12 sm:py-16"><p className="text-slate-500 dark:text-white/50 text-base sm:text-lg">No agents found. Try adjusting your filters.</p></div>
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-      {agents.map((agent) => (
-        <AgentCard key={agent.id} agent={agent} />
-      ))}
+      {agents.map((agent) => <AgentCard key={agent.id} agent={agent} />)}
     </div>
   )
 }

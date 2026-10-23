@@ -120,9 +120,9 @@ export function TraderCard({ trader }: TraderCardProps) {
 
   return (
     <Card
-      className={`bg-white dark:bg-zinc-950 w-full min-w-0 hover:border-pink-500/30 transition-all duration-300 group overflow-hidden flex flex-col border-slate-200 dark:border-zinc-800 ${
+      className={`bg-white dark:bg-white/[0.05] w-full min-w-0 hover:border-cyan-500/30 transition-all duration-300 group overflow-hidden flex flex-col border-slate-200 dark:border-white/10 ${
         expanded
-          ? "border-pink-500/40 shadow-lg shadow-pink-500/10 col-span-full sm:col-span-2 xl:col-span-3 2xl:col-span-4"
+          ? "border-cyan-500/40 shadow-lg shadow-cyan-500/10 col-span-full sm:col-span-2 xl:col-span-3 2xl:col-span-4"
           : "h-full"
       }`}
     >
@@ -130,7 +130,7 @@ export function TraderCard({ trader }: TraderCardProps) {
         {/* Header: Avatar and Username */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="relative p-1 rounded-full bg-gradient-to-br from-pink-500 to-blue-500 flex-shrink-0">
+            <div className="relative p-1 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex-shrink-0">
               <Avatar
                 className={`border-2 border-white dark:border-zinc-950 ${expanded ? "w-14 h-14 sm:w-16 sm:h-16" : "w-12 h-12"}`}
               >
@@ -180,13 +180,13 @@ export function TraderCard({ trader }: TraderCardProps) {
         {!expanded && (
           <>
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/10 space-y-1">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold flex items-center gap-1">
-                  <TrendingUp size={12} className="text-pink-500" /> Win Rate
+                  <TrendingUp size={12} className="text-cyan-500" /> Win Rate
                 </p>
-                <p className="text-xl font-bold text-pink-600 dark:text-pink-400">{winRate.toFixed(1)}%</p>
+                <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{winRate.toFixed(1)}%</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/10 space-y-1">
                 <p className="text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold flex items-center gap-1">
                   <Shield size={12} className="text-blue-600 dark:text-blue-400" /> Avg Return
                 </p>
@@ -194,7 +194,7 @@ export function TraderCard({ trader }: TraderCardProps) {
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-xs">
                 <DollarSign size={14} />
                 <span>Allocation Range</span>
@@ -209,7 +209,7 @@ export function TraderCard({ trader }: TraderCardProps) {
               {Array.from({ length: 20 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex-1 bg-gradient-to-t from-pink-500/60 to-pink-500/90 rounded-t-sm"
+                  className="flex-1 bg-gradient-to-t from-cyan-500/60 to-cyan-500/90 rounded-t-sm"
                   style={{ height: `${30 + Math.sin(i / 3) * 50 + Math.random() * 20}%` }}
                 />
               ))}
@@ -222,8 +222,8 @@ export function TraderCard({ trader }: TraderCardProps) {
           <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             {/* Full stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
-                <div className="flex items-center gap-2 text-pink-600 dark:text-pink-400">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
+                <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
                   <TrendingUp size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
                     Win Rate
@@ -231,7 +231,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold">{winRate.toFixed(1)}%</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
                 <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                   <Shield size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
@@ -240,7 +240,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">+{avgReturn.toFixed(1)}%</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                   <Users size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
@@ -249,7 +249,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold">{subCount.toLocaleString()}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                   <Clock size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
@@ -258,7 +258,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold">${minAlloc}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
                 <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
                   <Calendar size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
@@ -267,7 +267,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold">${maxAlloc}</p>
               </div>
-              <div className="bg-slate-50 dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5">
+              <div className="bg-slate-50 dark:bg-white/5 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
                 <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                   <Shield size={16} className="flex-shrink-0" />
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 uppercase font-semibold">
@@ -279,16 +279,16 @@ export function TraderCard({ trader }: TraderCardProps) {
             </div>
 
             {/* Equity Growth Chart */}
-            <div className="bg-slate-50 dark:bg-zinc-900 p-4 sm:p-6 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-4">
+            <div className="bg-slate-50 dark:bg-white/5 p-4 sm:p-6 rounded-xl border border-slate-200 dark:border-white/10 space-y-4">
               <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                <TrendingUp size={18} className="text-pink-500" />
+                <TrendingUp size={18} className="text-cyan-500" />
                 Equity Growth
               </h3>
               <div className="h-28 sm:h-36 flex items-end gap-[2px] sm:gap-1">
                 {Array.from({ length: 40 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex-1 bg-gradient-to-t from-pink-500/30 to-pink-500/70 rounded-t-sm"
+                    className="flex-1 bg-gradient-to-t from-cyan-500/30 to-cyan-500/70 rounded-t-sm"
                     style={{ height: `${30 + Math.sin(i / 5) * 30 + Math.random() * 20}%` }}
                   />
                 ))}
@@ -296,9 +296,9 @@ export function TraderCard({ trader }: TraderCardProps) {
             </div>
 
             {/* Start Copying Form */}
-            <div className="bg-slate-50 dark:bg-zinc-900 p-4 sm:p-6 rounded-xl border border-pink-500/20 space-y-5">
+            <div className="bg-slate-50 dark:bg-white/5 p-4 sm:p-6 rounded-xl border border-cyan-500/30 space-y-5">
               <div className="space-y-1">
-                <h3 className="text-lg sm:text-xl font-bold text-gradient-pink">Start Copying</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400">Start Copying</h3>
                 <p className="text-sm text-slate-500 dark:text-zinc-400">
                   Set your parameters and automatically mirror this trader&apos;s signals
                 </p>
@@ -319,7 +319,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                     max={maxAlloc}
                     value={allocation}
                     onChange={(e) => setAllocation(Number(e.target.value))}
-                    className="pl-8 h-11 text-base bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 focus:ring-pink-500/50"
+                    className="pl-8 h-11 text-base bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/10 focus:ring-cyan-500/50"
                   />
                 </div>
                 <p className="text-xs text-slate-400 dark:text-zinc-500">
@@ -333,7 +333,7 @@ export function TraderCard({ trader }: TraderCardProps) {
                   <Label htmlFor={`drawdown-${trader.id}`} className="text-slate-600 dark:text-zinc-300">
                     Max Drawdown
                   </Label>
-                  <span className="text-sm font-bold text-pink-600 dark:text-pink-400">{maxDrawdown[0]}%</span>
+                  <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">{maxDrawdown[0]}%</span>
                 </div>
                 <Slider
                   id={`drawdown-${trader.id}`}
@@ -342,13 +342,13 @@ export function TraderCard({ trader }: TraderCardProps) {
                   min={5}
                   max={50}
                   step={5}
-                  className="[&_[role=slider]]:bg-pink-500 [&_[role=slider]]:border-pink-600"
+                  className="[&_[role=slider]]:bg-cyan-500 [&_[role=slider]]:border-cyan-600"
                 />
                 <p className="text-xs text-slate-400 dark:text-zinc-500">Auto-pause if losses exceed this threshold</p>
               </div>
 
               {/* Performance Fee Notice */}
-              <Alert className="bg-pink-50 dark:bg-pink-950 border-pink-300 dark:border-pink-700">
+              <Alert className="bg-cyan-50 dark:bg-cyan-500/10 border-cyan-300 dark:border-cyan-500/30">
                 <AlertDescription className="text-xs text-slate-500 dark:text-zinc-400">
                   This trader charges a <strong>{perfFee}%</strong> performance fee on profits. Fees
                   are deducted automatically from winning trades.
@@ -358,7 +358,7 @@ export function TraderCard({ trader }: TraderCardProps) {
               {/* CTA Button */}
               <Button
                 onClick={handleStartCopying}
-                className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 h-12 font-semibold text-base"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 h-12 font-semibold text-base"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Submitting..." : "Start Copying Now"}
@@ -392,7 +392,7 @@ export function TraderCard({ trader }: TraderCardProps) {
             {/* Expand / View Profile Button */}
             <Button
               onClick={() => setExpanded(true)}
-              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-xl transition-all duration-300 py-5 sm:py-6 text-sm sm:text-base shadow-lg hover:shadow-pink-500/30 gap-2"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 py-5 sm:py-6 text-sm sm:text-base shadow-lg hover:shadow-cyan-500/30 gap-2"
             >
               <span className="hidden sm:inline">View Full Profile & Copy</span>
               <span className="sm:hidden">View Profile</span>

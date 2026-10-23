@@ -21,30 +21,25 @@ export function BalanceCard({
   onToggleBalance,
   accountType = "demo",
 }: BalanceCardProps) {
-  const isProFx = accountType === "pro-fx";
   const isMt5Real = accountType === "mt5";
   const isMt5Demo = accountType === "mt5-demo";
   const isDemoAccount = accountType === "demo" || isMt5Demo;
 
-  let from = "from-blue-600";
-  let to = "to-blue-800";
-  if (isProFx) { from = "from-purple-600"; to = "to-purple-800"; }
-  else if (isMt5Real) { from = "from-teal-600"; to = "to-teal-800"; }
+  let from = "from-cyan-600";
+  let to = "to-blue-700";
+  if (isMt5Real) { from = "from-teal-600"; to = "to-teal-800"; }
   else if (isMt5Demo) { from = "from-amber-500"; to = "to-amber-700"; }
-  else if (isRealAccount) { from = "from-orange-500"; to = "to-orange-700"; }
+  else if (isRealAccount) { from = "from-cyan-500"; to = "to-blue-600"; }
 
-  const label = isMt5Demo ? "MT5 Demo" : isDemoAccount ? "Demo" : isMt5Real ? "MT5 Real" : isProFx ? "Pro-FX" : "Live";
+  const label = isMt5Demo ? "MT5 Demo" : isDemoAccount ? "Demo" : isMt5Real ? "MT5 Real" : "Live";
 
-  const iconSrc = isProFx
-    ? "/pro-fx-account-icon.png"
-    : isDemoAccount
-    ? "/demo-account-icon.png"
-    : "/real-account-icon.png";
-  const iconAlt = isProFx ? "Pro-FX" : isDemoAccount ? "Demo Account" : "Real Account";
+  const iconSrc = isDemoAccount ? "/demo-account-icon.png" : "/real-account-icon.png";
+  const iconAlt = isDemoAccount ? "Demo Account" : "Real Account";
 
   return (
-    <section className={`relative overflow-hidden rounded-[1.8rem] border border-white/30 bg-gradient-to-br ${from} ${to} p-6 text-white shadow-2xl sm:p-8`}>
-      <div className="pointer-events-none absolute -right-8 -bottom-10 h-36 w-36 rounded-full bg-white/20 blur-2xl" />
+    <section className={`relative overflow-hidden rounded-[1.8rem] border border-cyan-500/30 bg-gradient-to-br ${from} ${to} p-6 text-white shadow-2xl shadow-cyan-500/10 sm:p-8`}>
+      <div className="pointer-events-none absolute -right-8 -bottom-10 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
+      <div className="pointer-events-none absolute -left-4 -top-4 h-24 w-24 rounded-full bg-cyan-400/20 blur-xl" />
       <div className="relative z-10">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -64,11 +59,11 @@ export function BalanceCard({
 
         <div className="mt-6">
           <p className="text-xs uppercase tracking-[0.16em] text-white/70">Total balance</p>
-          <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/25 bg-black/20 px-5 py-4">
+          <div className="mt-2 flex items-center justify-between rounded-2xl border border-white/25 bg-black/20 px-5 py-4 backdrop-blur-sm">
             <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
               {showBalance ? `$${formatCurrency(balance)}` : "••••••••"}
             </h2>
-            <button onClick={onToggleBalance} className="rounded-xl p-2 hover:bg-white/10" aria-label="Toggle balance">
+            <button onClick={onToggleBalance} className="rounded-xl p-2 hover:bg-white/10 transition-colors" aria-label="Toggle balance">
               {showBalance ? <Eye size={22} /> : <EyeOff size={22} />}
             </button>
           </div>
@@ -77,7 +72,7 @@ export function BalanceCard({
         <div className="mt-4 flex items-center justify-between text-sm">
           <span className="uppercase tracking-wide text-white/90">{username}</span>
           <span className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${isDemoAccount ? "bg-amber-300" : "bg-emerald-300"}`} />
+            <span className={`h-2 w-2 rounded-full ${isDemoAccount ? "bg-amber-300" : "bg-cyan-300"} animate-pulse`} />
             {isDemoAccount ? "Sandbox" : "Active"}
           </span>
         </div>

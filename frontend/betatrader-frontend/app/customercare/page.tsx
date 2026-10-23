@@ -19,8 +19,6 @@ import { TopNavbar } from '@/components/top-navbar'
 import { Sidebar } from '@/components/sidebar'
 import type { Account } from '@/types/account'
 
-// ==================== TYPES ====================
-
 interface Message {
   id: string
   sender: 'user' | 'staff' | 'system'
@@ -28,11 +26,7 @@ interface Message {
   timestamp: string
   senderName?: string
   is_read?: boolean
-  agent?: {
-    id: number
-    name: string
-    image?: string | null
-  } | null
+  agent?: { id: number; name: string; image?: string | null } | null
 }
 
 interface User {
@@ -61,15 +55,8 @@ interface ChatMessage {
   is_me: boolean
   is_read?: boolean
   is_system?: boolean
-  sender?: {
-    username: string
-    is_staff: boolean
-  }
-  agent?: {
-    id: number
-    name: string
-    image?: string | null
-  } | null
+  sender?: { username: string; is_staff: boolean }
+  agent?: { id: number; name: string; image?: string | null } | null
 }
 
 interface RawAccount {
@@ -77,8 +64,6 @@ interface RawAccount {
   account_type?: string
   balance?: string | number
 }
-
-// ==================== COMPONENT ====================
 
 export default function CustomerCarePage() {
   const searchParams = useSearchParams()
@@ -97,18 +82,11 @@ export default function CustomerCarePage() {
   const [callDuration, setCallDuration] = useState(0)
   const [showCallModal, setShowCallModal] = useState(false)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
-
-  // Agent context
-  const [currentAgentId, setCurrentAgentId] = useState<number | null>(
-    agentIdFromUrl ? Number(agentIdFromUrl) : null
-  )
-  const [currentAgentName, setCurrentAgentName] = useState<string | null>(
-    agentNameFromUrl || null
-  )
+  const [currentAgentId, setCurrentAgentId] = useState<number | null>(agentIdFromUrl ? Number(agentIdFromUrl) : null)
+  const [currentAgentName, setCurrentAgentName] = useState<string | null>(agentNameFromUrl || null)
 
   const pendingOfferCallIdRef = useRef<number | null>(null)
   const [pendingOffer, setPendingOffer] = useState<RTCSessionDescriptionInit | null>(null)
-
   const tokenRef = useRef<string | null>(null)
   const outgoingCallRef = useRef<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -117,7 +95,6 @@ export default function CustomerCarePage() {
   const holdMusicRef = useRef<HTMLAudioElement | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement>(null)
 
-  // Load Session
   useEffect(() => {
     setMounted(true)
     const rawSession = localStorage.getItem('user_session')
@@ -128,467 +105,205 @@ export default function CustomerCarePage() {
       try {
         const sessionData = JSON.parse(rawSession)
         const rawAccounts: RawAccount[] = sessionData.accounts || []
-
         const normalizedAccounts: Account[] = rawAccounts
           .filter((acc): acc is RawAccount & { id: string | number } => acc.id != null)
-          .map((acc) => ({
-            id: Number(acc.id),
-            account_type: acc.account_type || '',
-            balance: Number(acc.balance) || 0,
-          }))
-
-        const userData: User = {
-          username: sessionData.username || 'User',
-          email: sessionData.email || '',
-          is_staff: Boolean(sessionData.is_staff || false),
-          accounts: normalizedAccounts,
-        }
-
+          .map((acc) => ({ id: Number(acc.id), account_type: acc.account_type || '', balance: Number(acc.balance) || 0 }))
+        const userData: User = { username: sessionData.username || 'User', email: sessionData.email || '', is_staff: Boolean(sessionData.is_staff || false), accounts: normalizedAccounts }
         setCurrentUser(userData)
-
         const activeId = localStorage.getItem('active_account_id')
-        const foundAccount =
-          userData.accounts.find((acc) => acc.id === Number(activeId)) || userData.accounts[0]
-
+        const foundAccount = userData.accounts.find((acc) => acc.id === Number(activeId)) || userData.accounts[0]
         setActiveAccount(foundAccount || null)
       } catch (e) {
-        console.error('Failed to parse user_session in Customer Care:', e)
+        console.error('Failed to parse user_session:', e)
       }
     }
   }, [])
 
   const token = tokenRef.current
 
-  // ==================== WEBRTC + CALL HOOKS ====================
-
-  const {
-    createAndSendOffer,
-    handleRemoteOffer,
-    handleRemoteAnswer,
-    addIceCandidate,
-    closeConnection,
-  } = useWebRTCCall({
-    onIceCandidate: (candidate) => {
-      if (callId) {
-        sendICECandidate(callId, candidate)
-      }
-    },
+  const { createAndSendOffer, handleRemoteOffer, handleRemoteAnswer, addIceCandidate, closeConnection } = useWebRTCCall({
+    onIceCandidate: (candidate) => { if (callId) sendICECandidate(callId, candidate) },
     onRemoteStreamAvailable: (stream) => {
       setRemoteStream(stream)
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = stream
-        remoteAudioRef.current.play().catch((err) => {
-          console.error('Failed to play remote audio:', err)
-        })
-      }
+      if (remoteAudioRef.current) { remoteAudioRef.current.srcObject = stream; remoteAudioRef.current.play().catch(() => {}) }
     },
     onConnectionStateChange: (state) => {
-      if (state === 'connected') {
-        setIsCallActive(true)
-      }
-      if (state === 'failed' || state === 'closed') {
-        handleEndCallLogic()
-      }
+      if (state === 'connected') setIsCallActive(true)
+      if (state === 'failed' || state === 'closed') handleEndCallLogic()
     },
   })
 
   const handleCallEvent = useCallback((event: CallEvent) => {
     if (event.type === 'new_incoming_call' && event.call_id) {
       const id = event.call_id
-      const isOwnOutgoingCall =
-        outgoingCallRef.current === id ||
-        (event.user && event.user.username === currentUser?.username)
-
+      const isOwnOutgoingCall = outgoingCallRef.current === id || (event.user && event.user.username === currentUser?.username)
       if (currentUser?.is_staff && !isOwnOutgoingCall) {
-        setCallId(id)
-        pendingOfferCallIdRef.current = id
+        setCallId(id); pendingOfferCallIdRef.current = id
         localStorage.setItem('pending_incoming_call_id', id.toString())
-        setShowCallModal(true)
-        toast.success(`Incoming call - ID: ${id}`)
+        setShowCallModal(true); toast.success(`Incoming call - ID: ${id}`)
       }
     }
-
     if (event.type === 'webrtc_offer' && event.call_id && event.offer) {
-      if (currentUser?.is_staff) {
-        setPendingOffer(event.offer)
-        pendingOfferCallIdRef.current = event.call_id
-        if (callId === event.call_id) {
-          setCallId(event.call_id)
-        }
-      }
+      if (currentUser?.is_staff) { setPendingOffer(event.offer); pendingOfferCallIdRef.current = event.call_id; if (callId === event.call_id) setCallId(event.call_id) }
     }
-
-    if (event.type === 'webrtc_answer' && event.call_id && event.answer) {
-      handleRemoteAnswer(event.answer).catch((err) => {
-        console.error('Failed to handle remote answer:', err)
-      })
-    }
-
-    if (event.type === 'webrtc_ice' && event.call_id && event.candidate) {
-      addIceCandidate(event.candidate).catch((err) => {
-        console.error('Failed to add ICE candidate:', err)
-      })
-    }
-
-    if (event.type === 'call_answered') {
-      stopAllAudio()
-      setIsCalling(false)
-      setIsLoadingCall(false)
-      startCallTimer()
-      setIsCallActive(true)
-      toast.success('Call connected successfully')
-    }
-
-    if (event.type === 'call_ended') {
-      handleEndCallLogic()
-    }
+    if (event.type === 'webrtc_answer' && event.call_id && event.answer) handleRemoteAnswer(event.answer).catch(() => {})
+    if (event.type === 'webrtc_ice' && event.call_id && event.candidate) addIceCandidate(event.candidate).catch(() => {})
+    if (event.type === 'call_answered') { stopAllAudio(); setIsCalling(false); setIsLoadingCall(false); startCallTimer(); setIsCallActive(true); toast.success('Call connected successfully') }
+    if (event.type === 'call_ended') handleEndCallLogic()
   }, [currentUser?.is_staff, currentUser?.username, callId, handleRemoteAnswer, addIceCandidate])
 
-  const {
-    initiateCall,
-    answerCall,
-    endCall,
-    sendWebRTCOffer,
-    sendWebRTCAnswer,
-    sendICECandidate,
-    joinCallRoom,
-  } = useWebSocketCall(token, handleCallEvent)
+  const { initiateCall, answerCall, endCall, sendWebRTCOffer, sendWebRTCAnswer, sendICECandidate, joinCallRoom } = useWebSocketCall(token, handleCallEvent)
+  const { messages: chatMessages, isConnected: chatConnected, blockInfo, sendMessage: sendChatMessage } = useWebSocketChat(token)
 
-  const { messages: chatMessages, isConnected: chatConnected, blockInfo, sendMessage: sendChatMessage } =
-    useWebSocketChat(token)
-
-  // ==================== AUDIO & CALL HELPERS ====================
-
-  const playWelcomeSound = () => {
-    stopAllAudio()
-    welcomeAudioRef.current = new Audio('/audio/welcome.mp3')
-    welcomeAudioRef.current.play().catch((err) => console.error('Welcome sound failed:', err))
-    welcomeAudioRef.current.onended = playHoldMusic
-  }
-
-  const playHoldMusic = () => {
-    stopAllAudio()
-    holdMusicRef.current = new Audio('/audio/hold-music.mp3')
-    holdMusicRef.current.loop = true
-    holdMusicRef.current.play().catch((err) => console.error('Hold music failed:', err))
-  }
-
-  const stopAllAudio = () => {
-    welcomeAudioRef.current?.pause()
-    holdMusicRef.current?.pause()
-    welcomeAudioRef.current = null
-    holdMusicRef.current = null
-  }
-
-  const startCallTimer = () => {
-    if (durationTimerRef.current) clearInterval(durationTimerRef.current)
-    setCallDuration(0)
-    durationTimerRef.current = setInterval(() => setCallDuration((d) => d + 1), 1000)
-  }
+  const playWelcomeSound = () => { stopAllAudio(); welcomeAudioRef.current = new Audio('/audio/welcome.mp3'); welcomeAudioRef.current.play().catch(() => {}); welcomeAudioRef.current.onended = playHoldMusic }
+  const playHoldMusic = () => { stopAllAudio(); holdMusicRef.current = new Audio('/audio/hold-music.mp3'); holdMusicRef.current.loop = true; holdMusicRef.current.play().catch(() => {}) }
+  const stopAllAudio = () => { welcomeAudioRef.current?.pause(); holdMusicRef.current?.pause(); welcomeAudioRef.current = null; holdMusicRef.current = null }
+  const startCallTimer = () => { if (durationTimerRef.current) clearInterval(durationTimerRef.current); setCallDuration(0); durationTimerRef.current = setInterval(() => setCallDuration((d) => d + 1), 1000) }
 
   const handleEndCallLogic = useCallback(() => {
-    closeConnection()
-    stopAllAudio()
-    if (durationTimerRef.current) {
-      clearInterval(durationTimerRef.current)
-      durationTimerRef.current = null
-    }
-    setIsCallActive(false)
-    setIsCalling(false)
-    setCallId(null)
-    setCallDuration(0)
-    setShowCallModal(false)
-    setIsLoadingCall(false)
-    setPendingOffer(null)
-    setRemoteStream(null)
-    outgoingCallRef.current = null
-    pendingOfferCallIdRef.current = null
+    closeConnection(); stopAllAudio()
+    if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null }
+    setIsCallActive(false); setIsCalling(false); setCallId(null); setCallDuration(0); setShowCallModal(false); setIsLoadingCall(false); setPendingOffer(null); setRemoteStream(null)
+    outgoingCallRef.current = null; pendingOfferCallIdRef.current = null
     localStorage.removeItem('pending_incoming_call_id')
-
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null
-    }
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null
   }, [closeConnection])
 
   useEffect(() => {
     if (currentUser?.is_staff && !isCalling && !isCallActive) {
       const savedCallId = localStorage.getItem('pending_incoming_call_id')
-      if (
-        savedCallId &&
-        !showCallModal &&
-        outgoingCallRef.current !== Number(savedCallId)
-      ) {
-        setCallId(Number(savedCallId))
-        pendingOfferCallIdRef.current = Number(savedCallId)
-        setShowCallModal(true)
+      if (savedCallId && !showCallModal && outgoingCallRef.current !== Number(savedCallId)) {
+        setCallId(Number(savedCallId)); pendingOfferCallIdRef.current = Number(savedCallId); setShowCallModal(true)
       }
     }
   }, [currentUser?.is_staff, showCallModal, isCalling, isCallActive])
 
-  // ==================== CALL INITIATION ====================
-
   const handleInitiateCall = async () => {
     if (!token) return toast.error('Please log in again')
-
-    setIsLoadingCall(true)
-    setIsCalling(true)
-
+    setIsLoadingCall(true); setIsCalling(true)
     try {
-      const callData = await initiateCall()
-      const newCallId = callData.call_id
-
-      outgoingCallRef.current = newCallId
-      setCallId(newCallId)
-
-      joinCallRoom(newCallId)
-
-      const offer = await createAndSendOffer()
-      sendWebRTCOffer(newCallId, offer)
-
-      playWelcomeSound()
-      toast.info('Calling support... Connecting...')
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to initiate call'
-      toast.error(message)
-      handleEndCallLogic()
-    } finally {
-      setIsLoadingCall(false)
-    }
+      const callData = await initiateCall(); const newCallId = callData.call_id
+      outgoingCallRef.current = newCallId; setCallId(newCallId); joinCallRoom(newCallId)
+      const offer = await createAndSendOffer(); sendWebRTCOffer(newCallId, offer)
+      playWelcomeSound(); toast.info('Calling support... Connecting...')
+    } catch (error: unknown) { toast.error(error instanceof Error ? error.message : 'Failed to initiate call'); handleEndCallLogic() }
+    finally { setIsLoadingCall(false) }
   }
 
-  const handleEndCall = async () => {
-    if (callId) {
-      await endCall(callId).catch(() => {})
-    }
-    handleEndCallLogic()
-  }
+  const handleEndCall = async () => { if (callId) await endCall(callId).catch(() => {}); handleEndCallLogic() }
 
   const handleAnswerCall = async (voicePreset: string): Promise<void> => {
     const currentCallId = callId || pendingOfferCallIdRef.current
-
-    if (!currentCallId) {
-      toast.error('Call ID not found')
-      return
-    }
-
-    if (!pendingOffer) {
-      toast.error('No offer received yet. Please wait a moment and try again.')
-      return
-    }
-
+    if (!currentCallId) { toast.error('Call ID not found'); return }
+    if (!pendingOffer) { toast.error('No offer received yet. Please wait a moment and try again.'); return }
     try {
       await answerCall(currentCallId, voicePreset)
       const answer = await handleRemoteOffer(pendingOffer, voicePreset)
-      sendWebRTCAnswer(currentCallId, answer)
-      joinCallRoom(currentCallId)
-
-      setShowCallModal(false)
-      localStorage.removeItem('pending_incoming_call_id')
-      setPendingOffer(null)
-      pendingOfferCallIdRef.current = null
-
-      stopAllAudio()
-      setIsCalling(false)
-      setIsLoadingCall(false)
-      setIsCallActive(true)
-      startCallTimer()
-
-      toast.success('Call connected')
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to answer call'
-      toast.error(message)
-    }
+      sendWebRTCAnswer(currentCallId, answer); joinCallRoom(currentCallId)
+      setShowCallModal(false); localStorage.removeItem('pending_incoming_call_id'); setPendingOffer(null); pendingOfferCallIdRef.current = null
+      stopAllAudio(); setIsCalling(false); setIsLoadingCall(false); setIsCallActive(true); startCallTimer(); toast.success('Call connected')
+    } catch (error: unknown) { toast.error(error instanceof Error ? error.message : 'Failed to answer call') }
   }
 
-  const handleDeclineCall = () => {
-    setShowCallModal(false)
-    setPendingOffer(null)
-    pendingOfferCallIdRef.current = null
-    localStorage.removeItem('pending_incoming_call_id')
-  }
+  const handleDeclineCall = () => { setShowCallModal(false); setPendingOffer(null); pendingOfferCallIdRef.current = null; localStorage.removeItem('pending_incoming_call_id') }
 
-  // Sync Chat Messages (now supports agent)
   useEffect(() => {
     if (chatMessages.length > 0) {
       const formattedMessages: Message[] = chatMessages.map((msg: ChatMessage) => ({
-        id: msg.id.toString(),
-        sender: msg.is_me ? 'user' : msg.sender?.is_staff || msg.agent ? 'staff' : 'system',
-        content: msg.content,
-        timestamp: msg.sent_at,
-        senderName: msg.agent?.name || msg.sender?.username,
-        is_read: msg.is_read,
-        agent: msg.agent || null,
+        id: msg.id.toString(), sender: msg.is_me ? 'user' : msg.sender?.is_staff || msg.agent ? 'staff' : 'system',
+        content: msg.content, timestamp: msg.sent_at, senderName: msg.agent?.name || msg.sender?.username, is_read: msg.is_read, agent: msg.agent || null,
       }))
       setMessages(formattedMessages)
     }
   }, [chatMessages])
 
-  useEffect(() => {
-    if (blockInfo) {
-      setIsBlocked(true)
-      toast.error(blockInfo.title || 'Account Blocked')
-    }
-  }, [blockInfo])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  useEffect(() => { if (blockInfo) { setIsBlocked(true); toast.error(blockInfo.title || 'Account Blocked') } }, [blockInfo])
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   if (!mounted || !token || !currentUser) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
-        Loading Support Center...
-      </div>
-    )
+    return <div className="min-h-screen bg-background flex items-center justify-center text-foreground"><div className="text-cyan-500 animate-pulse">Loading Support Center...</div></div>
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <TopNavbar
-        isLoggedIn={true}
-        user={currentUser}
-        accountBalance={activeAccount?.balance || 0}
-        showBalance={true}
-        activeAccount={activeAccount}
-        accounts={currentUser.accounts || []}
-        onSwitchAccount={(account) => {
-          setActiveAccount(account)
-          localStorage.setItem('active_account_id', String(account.id))
-          window.dispatchEvent(new Event('session-updated'))
-        }}
-        onLogout={() => (window.location.href = '/login')}
-      />
+    <div className="min-h-screen flex flex-col bg-background text-foreground relative">
+      {/* Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/20" />
+        <div className="absolute top-1/4 -right-32 h-80 w-80 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/15" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-teal-300/10 blur-3xl dark:bg-teal-500/10" />
+      </div>
 
-      <div className="flex flex-1">
-        <Sidebar
-          loginType="real"
-          activeAccount={activeAccount}
-          accounts={currentUser.accounts || []}
-          onSwitchAccount={(account) => {
-            setActiveAccount(account)
-            localStorage.setItem('active_account_id', String(account.id))
-            window.dispatchEvent(new Event('session-updated'))
-          }}
-        />
+      <div className="relative z-10">
+        <TopNavbar isLoggedIn={true} user={currentUser} accountBalance={activeAccount?.balance || 0} showBalance={true} activeAccount={activeAccount} accounts={currentUser.accounts || []}
+          onSwitchAccount={(account) => { setActiveAccount(account); localStorage.setItem('active_account_id', String(account.id)); window.dispatchEvent(new Event('session-updated')) }}
+          onLogout={() => (window.location.href = '/login')} />
 
-        <main className="flex-1 w-full overflow-auto md:pl-64 p-6 relative">
-          <div className="fixed inset-0 z-0 hidden dark:block">
-            <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black" />
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-950/30 to-pink-950/20" />
-            <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-600/8 rounded-full blur-3xl" />
-            <div className="absolute top-1/2 left-1/3 w-96 h-96 bg-purple-700/8 rounded-full blur-3xl" />
-          </div>
-          <div className="fixed inset-0 z-0 block dark:hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-            <div className="absolute top-1/4 -left-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-pink-400/8 rounded-full blur-3xl" />
-          </div>
+        <div className="flex flex-1">
+          <Sidebar loginType="real" activeAccount={activeAccount} accounts={currentUser.accounts || []}
+            onSwitchAccount={(account) => { setActiveAccount(account); localStorage.setItem('active_account_id', String(account.id)); window.dispatchEvent(new Event('session-updated')) }} />
 
-          <div className="relative z-10 max-w-5xl mx-auto">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center">
-                <Headphones className="w-7 h-7" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold">Support Center</h1>
-                <p className="text-slate-500 dark:text-zinc-400">
-                  {currentAgentName
-                    ? `Chatting with ${currentAgentName}`
-                    : 'TradeRiser Professional Support'}
-                </p>
-              </div>
-            </div>
-
-            {/* Call Button Section */}
-            <div className="rounded-3xl p-8 mb-8 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col sm:flex-row gap-6 items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-zinc-400">Immediate Assistance</p>
-                <p className="text-2xl font-semibold">Speak with our support team</p>
-              </div>
-
-              {(isCallActive || isCalling || isLoadingCall) ? (
-                <Button
-                  onClick={handleEndCall}
-                  size="lg"
-                  className="rounded-full bg-red-600 hover:bg-red-700 px-10 py-6 text-lg"
-                >
-                  <PhoneOff className="mr-3 h-6 w-6" />
-                  {isCallActive
-                    ? `End Call (${Math.floor(callDuration / 60)}:${(callDuration % 60).toString().padStart(2, '0')})`
-                    : 'End Call (Calling...)'}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleInitiateCall}
-                  size="lg"
-                  className="rounded-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 px-10 py-6 text-lg"
-                  disabled={!chatConnected}
-                >
-                  <Phone className="mr-3 h-6 w-6" />
-                  Call Support Now
-                </Button>
-              )}
-            </div>
-
-            {/* Chat Area */}
-            <div className="rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 min-h-[620px] flex flex-col">
-              <div className="px-8 py-5 border-b border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-semibold">
-                  {currentAgentName ? `Chat with ${currentAgentName}` : 'Live Support Chat'}
-                </span>
-                {chatConnected && <span className="text-green-400 text-sm ml-2">• Online</span>}
-              </div>
-
-              <div className="flex-1 p-8 overflow-y-auto space-y-6">
-                {isBlocked ? (
-                  <BlockedMessage />
-                ) : messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-20">
-                    <Headphones className="w-16 h-16 text-slate-400 dark:text-zinc-500 mb-6" />
-                    <p className="text-xl text-slate-700 dark:text-zinc-200">
-                      {currentAgentName
-                        ? `How can ${currentAgentName} help you today?`
-                        : 'How can we assist you today?'}
-                    </p>
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <MessageBubble
-                      key={msg.id}
-                      message={msg}
-                      isCurrentUser={msg.sender === 'user'}
-                    />
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {!isBlocked && (
-                <div className="p-6 border-t border-slate-200 dark:border-zinc-800">
-                  <ChatInput
-                    onSend={async (message: string) => {
-                      // You can pass agent_id here if your sendChatMessage supports it
-                      const success = sendChatMessage(message)
-                      if (!success) {
-                        toast.error("Failed to send message")
-                      }
-                    }}
-                    disabled={!chatConnected}
-                  />
+          <main className="flex-1 w-full overflow-auto md:pl-64 p-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-[4px_4px_12px_#0891b2] dark:shadow-none">
+                  <Headphones className="w-7 h-7 text-white" />
                 </div>
-              )}
+                <div>
+                  <h1 className="text-4xl font-bold text-slate-800 dark:text-white">Support Center</h1>
+                  <p className="text-slate-500 dark:text-white/50">{currentAgentName ? `Chatting with ${currentAgentName}` : 'Beta Trader Professional Support'}</p>
+                </div>
+              </div>
+
+              {/* Call Button Section */}
+              <div className="rounded-3xl p-8 mb-8 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-6 items-center justify-between
+                bg-white shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:bg-white/[0.05] dark:shadow-none dark:backdrop-blur-xl">
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-white/50">Immediate Assistance</p>
+                  <p className="text-2xl font-semibold text-slate-800 dark:text-white">Speak with our support team</p>
+                </div>
+                {(isCallActive || isCalling || isLoadingCall) ? (
+                  <Button onClick={handleEndCall} size="lg" className="rounded-full bg-rose-600 hover:bg-rose-700 px-10 py-6 text-lg">
+                    <PhoneOff className="mr-3 h-6 w-6" />
+                    {isCallActive ? `End Call (${Math.floor(callDuration / 60)}:${(callDuration % 60).toString().padStart(2, '0')})` : 'End Call (Calling...)'}
+                  </Button>
+                ) : (
+                  <Button onClick={handleInitiateCall} size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-10 py-6 text-lg shadow-[4px_4px_12px_#0891b2] dark:shadow-none" disabled={!chatConnected}>
+                    <Phone className="mr-3 h-6 w-6" /> Call Support Now
+                  </Button>
+                )}
+              </div>
+
+              {/* Chat Area */}
+              <div className="rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 min-h-[620px] flex flex-col
+                bg-white shadow-[6px_6px_14px_#c8cdd6,-6px_-6px_14px_#ffffff] dark:bg-white/[0.05] dark:shadow-none dark:backdrop-blur-xl">
+                <div className="px-8 py-5 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
+                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" />
+                  <span className="font-semibold text-slate-800 dark:text-white">{currentAgentName ? `Chat with ${currentAgentName}` : 'Live Support Chat'}</span>
+                  {chatConnected && <span className="text-cyan-500 text-sm ml-2">• Online</span>}
+                </div>
+                <div className="flex-1 p-8 overflow-y-auto space-y-6">
+                  {isBlocked ? <BlockedMessage /> : messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                      <Headphones className="w-16 h-16 text-slate-400 dark:text-white/30 mb-6" />
+                      <p className="text-xl text-slate-700 dark:text-white/70">{currentAgentName ? `How can ${currentAgentName} help you today?` : 'How can we assist you today?'}</p>
+                    </div>
+                  ) : messages.map((msg) => <MessageBubble key={msg.id} message={msg} isCurrentUser={msg.sender === 'user'} />)}
+                  <div ref={messagesEndRef} />
+                </div>
+                {!isBlocked && (
+                  <div className="p-6 border-t border-slate-200 dark:border-white/10">
+                    <ChatInput onSend={async (message: string) => { const success = sendChatMessage(message); if (!success) toast.error("Failed to send message") }} disabled={!chatConnected} />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
 
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-
-      {showCallModal && (
-        <CallAnswerModal onAnswer={handleAnswerCall} onDecline={handleDeclineCall} />
-      )}
+      {showCallModal && <CallAnswerModal onAnswer={handleAnswerCall} onDecline={handleDeclineCall} />}
     </div>
   )
 }

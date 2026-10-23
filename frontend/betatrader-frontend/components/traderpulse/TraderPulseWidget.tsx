@@ -50,12 +50,8 @@ export function TraderPulseWidget() {
     const el = listRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-    setTimeout(() => {
-      el.scrollTop = el.scrollHeight;
-    }, 60);
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 60);
   };
 
   useEffect(() => {
@@ -68,9 +64,7 @@ export function TraderPulseWidget() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token")?.replace(/^"|"$/g, "");
-    const url = token
-      ? `${WS_BASE}/ws/traderpulse/?token=${encodeURIComponent(token)}`
-      : `${WS_BASE}/ws/traderpulse/`;
+    const url = token ? `${WS_BASE}/ws/traderpulse/?token=${encodeURIComponent(token)}` : `${WS_BASE}/ws/traderpulse/`;
 
     let stopped = false;
     const connect = () => {
@@ -81,28 +75,17 @@ export function TraderPulseWidget() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-
           if (data.type === "feed_history" && Array.isArray(data.posts)) {
             setPosts([...data.posts].reverse());
             shouldScroll.current = true;
             return;
           }
-          if (data.type === "online_update") {
-            setOnline(Number(data.online) || 0);
-            return;
-          }
+          if (data.type === "online_update") { setOnline(Number(data.online) || 0); return; }
           if (data.type === "like_update") {
-            setPosts((prev) =>
-              prev.map((p) =>
-                String(p.id) === String(data.post_id) ? { ...p, likes: data.likes } : p
-              )
-            );
+            setPosts((prev) => prev.map((p) => String(p.id) === String(data.post_id) ? { ...p, likes: data.likes } : p));
             return;
           }
-          if (data.type === "error") {
-            setError(data.message || "Something went wrong");
-            return;
-          }
+          if (data.type === "error") { setError(data.message || "Something went wrong"); return; }
           if (data.id && (data.text || data.image)) {
             setPosts((prev) => {
               const exists = prev.some((p) => String(p.id) === String(data.id));
@@ -115,69 +98,37 @@ export function TraderPulseWidget() {
         } catch {}
       };
 
-      ws.onclose = () => {
-        if (!stopped) setTimeout(connect, 4000);
-      };
+      ws.onclose = () => { if (!stopped) setTimeout(connect, 4000); };
     };
 
     connect();
-    return () => {
-      stopped = true;
-      wsRef.current?.close();
-    };
+    return () => { stopped = true; wsRef.current?.close(); };
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setUnread(0);
-      const t = setTimeout(scrollToBottom, 40);
-      return () => clearTimeout(t);
-    }
+    if (open) { setUnread(0); const t = setTimeout(scrollToBottom, 40); return () => clearTimeout(t); }
   }, [open, posts]);
 
   const send = () => {
     const content = text.trim();
     if ((!content && !imagePreview) || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(
-      JSON.stringify({
-        action: "post",
-        content,
-        image: imagePreview || "",
-        reply_to: replyTo || "",
-      })
-    );
-    setText("");
-    setImagePreview(null);
-    setReplyTo(null);
-    setError("");
-    shouldScroll.current = true;
+    wsRef.current.send(JSON.stringify({ action: "post", content, image: imagePreview || "", reply_to: replyTo || "" }));
+    setText(""); setImagePreview(null); setReplyTo(null); setError(""); shouldScroll.current = true;
   };
 
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Only images are allowed");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image must be under 2MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { setError("Only images are allowed"); return; }
+    if (file.size > 2 * 1024 * 1024) { setError("Image must be under 2MB"); return; }
     const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(typeof reader.result === "string" ? reader.result : null);
-      setError("");
-    };
+    reader.onload = () => { setImagePreview(typeof reader.result === "string" ? reader.result : null); setError(""); };
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
   const like = (postId: string) => {
-    if (!loggedIn) {
-      setError("Log in to like");
-      return;
-    }
+    if (!loggedIn) { setError("Log in to like"); return; }
     if (liked[postId]) return;
     setLiked((prev) => ({ ...prev, [postId]: true }));
     wsRef.current?.send(JSON.stringify({ action: "like", post_id: postId }));
@@ -193,9 +144,7 @@ export function TraderPulseWidget() {
     const t = e.changedTouches[0];
     const dx = t.clientX - swipeStart.current.x;
     const dy = t.clientY - swipeStart.current.y;
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-      setReplyTo(username);
-    }
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) setReplyTo(username);
     swipeStart.current = null;
   };
 
@@ -215,82 +164,43 @@ export function TraderPulseWidget() {
   return (
     <>
       {open && (
-        <div
-          className="fixed inset-x-0 bottom-0 z-[99998] flex h-[85dvh] max-h-[620px] w-full flex-col overflow-hidden rounded-t-3xl border border-white/40 bg-white/80 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/80 sm:inset-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[520px] sm:w-[min(92vw,380px)] sm:rounded-3xl"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
-          <div className="flex items-center justify-between border-b border-white/30 px-4 py-3 dark:border-white/10">
+        <div className="fixed inset-x-0 bottom-0 z-[99998] flex h-[85dvh] max-h-[620px] w-full flex-col overflow-hidden rounded-t-3xl sm:inset-auto sm:bottom-24 sm:right-4 sm:h-[70vh] sm:max-h-[520px] sm:w-[min(92vw,380px)] sm:rounded-3xl
+          bg-white border border-slate-200 shadow-[8px_8px_20px_#c8cdd6]
+          dark:bg-slate-950/90 dark:border-white/10 dark:shadow-none dark:backdrop-blur-2xl"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-t-3xl">
             <div>
-              <p className="text-sm font-bold">TraderPulse</p>
-              <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Users className="h-3 w-3" /> {online.toLocaleString()} online
-              </p>
+              <p className="text-sm font-bold">Beta Pulse</p>
+              <p className="flex items-center gap-1 text-[11px] text-cyan-100"><Users className="h-3 w-3" /> {online.toLocaleString()} online</p>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-full p-1 hover:bg-white/40 dark:hover:bg-white/10"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-white/20"><X className="h-4 w-4" /></button>
           </div>
 
-          <div
-            ref={listRef}
-            className="flex flex-1 flex-col space-y-2 overflow-y-auto overscroll-contain p-3"
-            style={{ WebkitOverflowScrolling: "touch" }}
-          >
-            {posts.length === 0 && (
-              <p className="py-10 text-center text-sm text-muted-foreground">No posts yet</p>
-            )}
+          <div ref={listRef} className="flex flex-1 flex-col space-y-2 overflow-y-auto overscroll-contain p-3" style={{ WebkitOverflowScrolling: "touch" }}>
+            {posts.length === 0 && <p className="py-10 text-center text-sm text-slate-500 dark:text-white/50">No posts yet</p>}
             {posts.map((p) => {
               const mine = isMine(p);
               const username = nameOf(p);
               return (
                 <div key={p.id} className={`flex ${mine ? "justify-start" : "justify-end"}`}>
-                  <div
-                    onDoubleClick={() => like(String(p.id))}
-                    onTouchStart={(e) => onTouchStart(e, String(p.id))}
-                    onTouchEnd={(e) => onTouchEnd(e, username)}
-                    onClick={() => onTap(String(p.id))}
-                    className={`drop-on-top relative !flex max-w-[85%] cursor-pointer select-none flex-col overflow-hidden rounded-2xl border px-3 py-2.5 text-sm backdrop-blur-md ${
-                      mine
-                        ? "border-pink-300/60 bg-pink-500/20 text-pink-950 dark:border-pink-400/30 dark:bg-pink-500/25 dark:text-white"
-                        : "border-white/70 bg-white/50 text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                    }`}
-                  >
+                  <div onDoubleClick={() => like(String(p.id))} onTouchStart={(e) => onTouchStart(e, String(p.id))} onTouchEnd={(e) => onTouchEnd(e, username)} onClick={() => onTap(String(p.id))}
+                    className={`relative max-w-[85%] cursor-pointer select-none flex-col overflow-hidden rounded-2xl border px-3 py-2.5 text-sm
+                      ${mine
+                        ? "border-cyan-300 bg-cyan-50 text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/20 dark:text-white shadow-[3px_3px_6px_#0891b2] dark:shadow-none"
+                        : "border-slate-200 bg-slate-50 text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white shadow-[3px_3px_6px_#d1d5db] dark:shadow-none"
+                      }`}>
                     <div className="relative z-[1] mb-1 flex items-center justify-between gap-2">
                       <span className="truncate text-[11px] font-semibold">
                         {mine ? "You" : `${p.sender?.country_flag || ""} @${username}`}
-                        {!mine && p.sender?.is_premium && (
-                          <span className="ml-1 text-[10px] text-amber-500">PRO</span>
-                        )}
+                        {!mine && p.sender?.is_premium && <span className="ml-1 text-[10px] text-amber-500">PRO</span>}
                       </span>
                       <span className="shrink-0 text-[10px] opacity-70">{p.time_ago || ""}</span>
                     </div>
                     <p className="relative z-[1] whitespace-pre-wrap leading-snug">{p.text}</p>
-                    {p.image && (
-                      <img
-                        src={p.image}
-                        alt=""
-                        className="relative z-[1] mt-2 max-h-40 w-full rounded-xl object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    )}
+                    {p.image && <img src={p.image} alt="" className="relative z-[1] mt-2 max-h-40 w-full rounded-xl object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
                     <p className="relative z-[1] mt-1 flex items-center justify-between gap-2 text-[11px] opacity-70">
-                      <span className="flex items-center gap-1">
-                        <Heart className={`h-3 w-3 ${liked[String(p.id)] ? "fill-red-500 text-red-500" : ""}`} />
-                        {p.likes || 0}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setReplyTo(username);
-                        }}
-                        className="flex items-center gap-1 rounded-full px-2 py-0.5 hover:bg-white/30 dark:hover:bg-white/10"
-                      >
+                      <span className="flex items-center gap-1"><Heart className={`h-3 w-3 ${liked[String(p.id)] ? "fill-rose-500 text-rose-500" : ""}`} /> {p.likes || 0}</span>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setReplyTo(username); }} className="flex items-center gap-1 rounded-full px-2 py-0.5 hover:bg-slate-200 dark:hover:bg-white/10">
                         <CornerUpLeft className="h-3 w-3" /> Reply
                       </button>
                     </p>
@@ -300,17 +210,13 @@ export function TraderPulseWidget() {
             })}
           </div>
 
-          {error && <p className="px-3 text-xs text-red-500">{error}</p>}
+          {error && <p className="px-3 text-xs text-rose-500">{error}</p>}
 
-          <div className="border-t border-white/30 p-3 dark:border-white/10">
+          <div className="border-t border-slate-200 dark:border-white/10 p-3">
             {replyTo && (
-              <div className="mb-2 flex items-center justify-between rounded-xl bg-pink-500/10 px-3 py-1.5 text-xs">
-                <span className="flex items-center gap-1">
-                  <CornerUpLeft className="h-3 w-3" /> Replying to @{replyTo}
-                </span>
-                <button onClick={() => setReplyTo(null)} className="opacity-70 hover:opacity-100">
-                  <X className="h-3 w-3" />
-                </button>
+              <div className="mb-2 flex items-center justify-between rounded-xl bg-cyan-50 dark:bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300">
+                <span className="flex items-center gap-1"><CornerUpLeft className="h-3 w-3" /> Replying to @{replyTo}</span>
+                <button onClick={() => setReplyTo(null)} className="opacity-70 hover:opacity-100"><X className="h-3 w-3" /></button>
               </div>
             )}
             {loggedIn ? (
@@ -318,59 +224,36 @@ export function TraderPulseWidget() {
                 {imagePreview && (
                   <div className="relative inline-block">
                     <img src={imagePreview} alt="preview" className="h-16 w-16 rounded-xl object-cover" />
-                    <button
-                      onClick={() => setImagePreview(null)}
-                      className="absolute -right-1 -top-1 rounded-full bg-black/70 p-0.5 text-white"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    <button onClick={() => setImagePreview(null)} className="absolute -right-1 -top-1 rounded-full bg-black/70 p-0.5 text-white"><X className="h-3 w-3" /></button>
                   </div>
                 )}
                 <div className="flex gap-2">
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/40 bg-white/60 dark:border-white/10 dark:bg-white/5"
-                    aria-label="Attach image"
-                  >
+                  <button type="button" onClick={() => fileRef.current?.click()}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/5 shadow-[2px_2px_4px_#d1d5db] dark:shadow-none" aria-label="Attach image">
                     <ImagePlus className="h-4 w-4" />
                   </button>
-                  <input
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && send()}
+                  <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
                     placeholder={replyTo ? `Reply to @${replyTo}` : "Share a thought..."}
-                    className="h-10 flex-1 rounded-xl border border-white/40 bg-white/60 px-3 text-sm dark:border-white/10 dark:bg-white/5"
-                  />
-                  <button
-                    onClick={send}
-                    disabled={!text.trim() && !imagePreview}
-                    className="drop-on-top relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-pink-600 text-white disabled:opacity-50"
-                  >
-                    <Send className="relative z-[1] h-4 w-4" />
+                    className="h-10 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-white/10 dark:bg-white/5 shadow-[inset_2px_2px_4px_#e2e8f0] dark:shadow-none" />
+                  <button onClick={send} disabled={!text.trim() && !imagePreview}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white disabled:opacity-50 shadow-[3px_3px_8px_#0891b2] dark:shadow-none">
+                    <Send className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-center text-xs text-muted-foreground">Log in to post</p>
+              <p className="text-center text-xs text-slate-500 dark:text-white/50">Log in to post</p>
             )}
           </div>
         </div>
       )}
 
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-[99998] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30"
-        style={{ bottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
-        aria-label="Open TraderPulse"
-      >
+      <button onClick={() => setOpen((v) => !v)}
+        className="fixed bottom-6 right-6 z-[99998] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-[4px_4px_12px_#0891b2] dark:shadow-lg"
+        style={{ bottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }} aria-label="Open Beta Pulse">
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-        {!open && unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
+        {!open && unread > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold">{unread > 9 ? "9+" : unread}</span>}
       </button>
     </>
   );

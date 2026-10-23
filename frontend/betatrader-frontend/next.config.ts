@@ -1,4 +1,3 @@
-// next.config.ts
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -20,35 +19,25 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'grandview-storage.s3.amazonaws.com',
         port: '',
-        pathname: '/agents/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'grandview-storage.s3.eu-north-1.amazonaws.com',
         port: '',
-        pathname: '/agents/**',
+        pathname: '/**',
       },
       {
-        protocol: 'https',
-        hostname: 'grandview-storage.s3.amazonaws.com',
-        port: '',
-        pathname: '/kyc/**',                    // ← Added for KYC
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8000',
+        pathname: '/media/**',
       },
       {
-        protocol: 'https',
-        hostname: 'grandview-storage.s3.eu-north-1.amazonaws.com',
-        port: '',
-        pathname: '/kyc/**',                    // ← Added for KYC
-      },
-      {
-        protocol: 'https',
-        hostname: 'grandview-storage.s3.amazonaws.com',
-        pathname: '/mpesa_avatars/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'grandview-storage.s3.eu-north-1.amazonaws.com',
-        pathname: '/mpesa_avatars/**',
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/media/**',
       },
       {
         protocol: 'https',
@@ -59,17 +48,24 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Ignore TypeScript errors during build
+  // Proxy /media requests to Django backend
+  async rewrites() {
+    return [
+      {
+        source: '/media/:path*',
+        destination: 'http://127.0.0.1:8000/media/:path*',
+      },
+    ];
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Optional: Also ignore ESLint errors during build
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // Optional: helps with service worker headers
   async headers() {
     return [
       {

@@ -5,7 +5,7 @@ from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .models import User, Account, SuspensionEvidence,KYCSubmission
+from .models import User, Account, SuspensionEvidence, KYCSubmission
 from .serializers import UserSerializer, AccountSerializer, SuspensionEvidenceSerializer
 from django.conf import settings
 from django.db import transaction
@@ -30,13 +30,20 @@ class SignupView(APIView):
         password = data.get('password')
         username = (data.get('username') or '').strip()
         account_type = data.get('account_type', 'standard')
-        platform = data.get('platform', 'traderiser')
+        platform = data.get('platform', 'betatrader')
         phone = data.get('phone', '')
+        country = data.get('country', '')
         referral_code = data.get('referral_code') or request.query_params.get('ref')
 
         if not email or not password or not username:
             return Response(
                 {'error': 'Email, password, and username are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not country:
+            return Response(
+                {'error': 'Country is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -58,13 +65,14 @@ class SignupView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        serializer = UserSerializer(data={'email': email, 'username': username, 'phone': phone})
+        serializer = UserSerializer(data={'email': email, 'username': username, 'phone': phone, 'country': country})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             user = serializer.save()
             user.set_password(password)
+            user.country = country
             user.save()
             user.create_default_accounts()
 
@@ -80,7 +88,7 @@ class SignupView(APIView):
                             message=(
                                 f"Hello {referrer.username},\n\n"
                                 f"A new user ({user.username} / {user.email}) has registered using your referral link.\n\n"
-                                f"Thank you for spreading the word!\nTradeRiser Team"
+                                f"Thank you for spreading the word!\nBetaTrader Team"
                             ),
                             from_email=None,
                             recipient_list=[referrer.email],
@@ -94,7 +102,7 @@ class SignupView(APIView):
         refresh = RefreshToken.for_user(user)
         active_account = (
             user.accounts.filter(platform=platform, account_type=account_type).first() or
-            user.accounts.filter(platform='traderiser', account_type='standard').first() or
+            user.accounts.filter(platform='betatrader', account_type='standard').first() or
             user.accounts.first()
         )
 
@@ -105,12 +113,17 @@ class SignupView(APIView):
             'active_account': AccountSerializer(active_account).data if active_account else None
         }, status=status.HTTP_201_CREATED)
 
+
 class CreateAdditionalAccountView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         account_type = request.data.get('account_type')
-        platform = request.data.get('platform', 'traderiser')
+        platform = request.data.get('platform', 'betatrader')
+
+        # Block ProFX creation
+        if account_type == 'pro-fx' or account_type == 'pro':
+            return Response({'error': 'ProFX accounts are not available'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not request.user.can_create_account(account_type, platform):
             return Response({'error': 'Cannot create this account type'}, status=status.HTTP_400_BAD_REQUEST)
@@ -134,7 +147,7 @@ class LoginView(APIView):
         email = (request.data.get('email') or '').strip().lower()
         password = request.data.get('password')
         account_type = request.data.get('account_type', 'standard')
-        platform = request.data.get('platform', 'traderiser')
+        platform = request.data.get('platform', 'betatrader')
 
         if not email or not password:
             return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -155,7 +168,7 @@ class LoginView(APIView):
 
         active_account = (
             user.accounts.filter(platform=platform, account_type=account_type).first() or
-            user.accounts.filter(platform='traderiser').first() or
+            user.accounts.filter(platform='betatrader').first() or
             user.accounts.first()
         )
 
@@ -188,6 +201,7 @@ class LoginView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+
 class AppealSuspensionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -215,7 +229,7 @@ class AppealSuspensionView(APIView):
             subject=f"Appeal Submitted: {request.user.username}",
             message=f"User {request.user.email} appealed: {description}",
             from_email=None,
-            recipient_list=['support@traderiser.com'],
+            recipient_list=['support@betatrader.app'],
             html_message=f"<h2>New Appeal</h2><p>User: {request.user.username}</p><p>{description}</p>",
             fail_silently=False,
         )
@@ -253,7 +267,7 @@ class ResetDemoBalanceView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        platform = request.data.get('platform', 'traderiser')
+        platform = request.data.get('platform', 'betatrader')
         try:
             account = Account.objects.get(
                 user=request.user, 
@@ -290,7 +304,6 @@ class SwitchWalletView(APIView):
             return Response({'error': 'Account not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
-# Utility views (unchanged but fully compatible)
 class VerifyEmailView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -320,7 +333,7 @@ class ResendOTPView(APIView):
         cache.set(f"otp_{email}", {'code': code, 'expires': expires}, timeout=60)
 
         send_mail(
-            subject='Your TradeRiser Verification Code',
+            subject='Your BetaTrader Verification Code',
             message=f'Your verification code is: {code}',
             from_email=None,
             recipient_list=[email],
@@ -337,8 +350,8 @@ class SashiToggleView(APIView):
         account_type = request.data.get('account_type', 'standard')
         try:
             account = Account.objects.get(user=request.user, account_type=account_type)
-            if 'demo' in account.account_type or account.account_type == 'pro-fx':
-                return Response({'error': 'Cannot toggle Sashi on this account'}, status=status.HTTP_400_BAD_REQUEST)
+            if 'demo' in account.account_type:
+                return Response({'error': 'Cannot toggle Sashi on demo accounts'}, status=status.HTTP_400_BAD_REQUEST)
 
             user = request.user
             user.is_sashi = not user.is_sashi
@@ -348,7 +361,6 @@ class SashiToggleView(APIView):
             return Response({'error': 'Account not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ====================== PASSWORD RESET VIEWS ======================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def password_reset_request(request):
@@ -365,7 +377,7 @@ def password_reset_request(request):
     cache.set(f"pw_reset_{email}", code, timeout=300)
 
     send_mail(
-        subject="TradeRiser Password Reset Code",
+        subject="BetaTrader Password Reset Code",
         message=f"Your 4-digit reset code is: {code}",
         from_email=None,
         recipient_list=[email],
@@ -407,6 +419,7 @@ def password_reset_confirm(request):
     cache.delete(f"pw_reset_{email}")
     return Response({"message": "Password reset successful"})
 
+
 class KYCSubmitView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -433,7 +446,6 @@ class KYCSubmitView(APIView):
             }
         )
 
-        # Update user status
         user.kyc_status = 'pending'
         user.kyc_submitted_at = timezone.now()
         user.save()
@@ -442,14 +454,9 @@ class KYCSubmitView(APIView):
             'message': 'KYC documents submitted successfully',
             'status': kyc_submission.status
         }, status=status.HTTP_201_CREATED)
-    
-# ====================== ADMIN LOGIN (for Customer Care Portal) ==========================
+
+
 class AdminLoginView(APIView):
-    """
-    Dedicated login for /admin-customercare
-    POST /api/accounts/admin/login/
-    Body: { "username": "...", "password": "..." }
-    """
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
@@ -463,10 +470,8 @@ class AdminLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Try with email first (your LoginView also uses email as username)
         user = authenticate(request=request, username=username, password=password)
 
-        # Fallback: if they typed a real username
         if user is None:
             try:
                 user_obj = User.objects.get(username=username)

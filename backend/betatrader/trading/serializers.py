@@ -1,6 +1,6 @@
 # trading/serializers.py
 from rest_framework import serializers
-from .models import MarketType, Market, TradeType, Robot, UserRobot, Trade, Signal,EliteRobotConfig
+from .models import MarketType, Market, TradeType, Robot, UserRobot, Trade, Signal, EliteRobotConfig
 from django.conf import settings
 
 
@@ -11,7 +11,17 @@ class RobotSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
-            return f"{settings.MEDIA_URL}{obj.image}"
+            url = obj.image.url if hasattr(obj.image, 'url') else str(obj.image)
+            # If already absolute (S3), return as-is
+            if url.startswith('http://') or url.startswith('https://'):
+                return url
+            # Build absolute URL for local media
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+            # Fallback to Django backend URL
+            backend_url = getattr(settings, 'BACKEND_URL', 'http://127.0.0.1:8000')
+            return f"{backend_url}{url}" if url.startswith('/') else f"{backend_url}/{url}"
         return None
 
     def get_effective_price(self, obj):
@@ -30,13 +40,10 @@ class RobotSerializer(serializers.ModelSerializer):
             'available_for_demo',
             'image',
             'win_rate',
-            # Deriv Premium Robot fields
             'is_deriv_robot',
             'deriv_access_key',
-            # S-Digit Robot Fields
             'is_s_digit_robot',
             'default_digit_contract_type',
-            # ==================== NEW: Bulk Trades AI Fields ====================
             'is_bulk_robot',
             'max_bulk_trades',
             'is_elite_robot',
@@ -75,7 +82,6 @@ class UserRobotSerializer(serializers.ModelSerializer):
     effective_win_rate = serializers.SerializerMethodField()
 
     def get_deriv_access_key(self, obj):
-        """Return deriv_access_key only if the robot is a Deriv Premium Robot"""
         if getattr(obj.robot, 'is_deriv_robot', False) and obj.robot.deriv_access_key:
             return obj.robot.deriv_access_key
         return None
@@ -104,7 +110,6 @@ class TradeSerializer(serializers.ModelSerializer):
     trade_type = TradeTypeSerializer(read_only=True)
     used_robot = RobotSerializer(read_only=True)
 
-    # Digit Trading Fields
     is_digit_trade = serializers.BooleanField(read_only=True)
     digit_contract_type = serializers.CharField(read_only=True)
     digit_barrier = serializers.IntegerField(read_only=True)
@@ -131,7 +136,7 @@ class SignalSerializer(serializers.ModelSerializer):
     timeframe = serializers.SerializerMethodField()
 
     def get_timeframe(self, obj):
-        return "1 minute"  # Always show as 1-minute to users
+        return "1 minute"
 
     class Meta:
         model = Signal
@@ -147,6 +152,7 @@ class SignalSerializer(serializers.ModelSerializer):
             'strength', 
             'current_price'
         ]
+
 
 class EliteRobotConfigSerializer(serializers.ModelSerializer):
     robot_name = serializers.CharField(source='robot.name', read_only=True)

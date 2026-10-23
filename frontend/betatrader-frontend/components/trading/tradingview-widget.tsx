@@ -13,7 +13,6 @@ export function TradingViewWidget({ symbol = "EURUSD" }: TradingViewWidgetProps)
 
   useEffect(() => {
     if (!container.current) return
-
     container.current.innerHTML = ""
 
     const script = document.createElement("script")
@@ -36,7 +35,10 @@ export function TradingViewWidget({ symbol = "EURUSD" }: TradingViewWidgetProps)
   }, [symbol, resolvedTheme])
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 w-full">
+    <div className="rounded-2xl overflow-hidden
+      bg-white border border-slate-200
+      shadow-[8px_8px_16px_#b8bdc6,-8px_-8px_16px_#ffffff]
+      dark:bg-white/[0.05] dark:border-white/10 dark:shadow-none">
       <div ref={container} className="w-full" style={{ height: "500px" }} />
     </div>
   )

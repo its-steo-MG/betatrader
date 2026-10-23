@@ -1,4 +1,3 @@
-// components/agents/copy-button.tsx
 "use client";
 
 import { Copy, Check } from "lucide-react";
@@ -28,24 +27,10 @@ export default function CopyButton({ text, label = "Copy", className = "" }: Cop
   if (!text.trim()) return null;
 
   return (
-    <button
-      onClick={handleCopy}
-      disabled={copied}
-      className={`
-        drop-on-top relative p-1.5 rounded-md
-        bg-white/40 dark:bg-white/10 backdrop-blur-md hover:bg-white/50 dark:hover:bg-white/10 dark:bg-zinc-700 active:bg-slate-300
-        transition-colors flex items-center justify-center
-        ${className} ${copied ? "cursor-default" : ""}
-      `}
-      aria-label={`Copy ${label}`}
-    >
-      <span className="relative z-[1]">
-        {copied ? (
-          <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-300 dark:text-emerald-400" />
-        ) : (
-          <Copy className="w-4 h-4 text-slate-600 dark:text-zinc-300" />
-        )}
-      </span>
+    <button onClick={handleCopy} disabled={copied}
+      className={`p-1.5 rounded-md bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors flex items-center justify-center shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff] dark:shadow-none ${className} ${copied ? "cursor-default" : ""}`}
+      aria-label={`Copy ${label}`}>
+      {copied ? <Check className="w-4 h-4 text-cyan-600 dark:text-cyan-400" /> : <Copy className="w-4 h-4 text-slate-600 dark:text-white/60" />}
     </button>
   );
 }

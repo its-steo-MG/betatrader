@@ -27,13 +27,13 @@ export function TraderLeaderboard() {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[400px] bg-slate-100 dark:bg-zinc-800" />)}
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[400px] bg-slate-100 dark:bg-white/10" />)}
       </div>
     )
   }
   if (error && traders.length === 0) {
     return (
-      <Alert className="bg-rose-50 dark:bg-rose-950 border-rose-300 dark:border-rose-800">
+      <Alert className="bg-rose-50 dark:bg-rose-500/10 border-rose-300 dark:border-rose-500/30">
         <AlertCircle className="h-4 w-4 text-rose-600" />
         <AlertDescription>Failed to load traders: {error}. Please try again later.</AlertDescription>
       </Alert>
